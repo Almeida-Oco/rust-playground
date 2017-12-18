@@ -1,4 +1,4 @@
-# rust-playground
-Just a repository to host my [Rust](https://www.rust-lang.org/en-US/) projects
+First major project on [Rust](https://www.rust-lang.org/en-US/index.html).
 
-Most of the projects might not be working. This is exactly as advertised, a playground
+Trying to create an easier way to rename files in a system using regex.
+(It is highly likely that such features are already provided by some other program)
