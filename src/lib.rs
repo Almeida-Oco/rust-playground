@@ -1,8 +1,6 @@
 use std::fs;
 use std::path;
 
-#[allow(unused_variables)]
-
 pub struct Options {
 	path: String,
 	original_fn: Vec<String>,
@@ -11,8 +9,8 @@ pub struct Options {
 
 impl Options {
 	pub fn new (path: String, new_fn: String) -> Options {
-		let mut vector = Vec::new();
-		Options {path, original_fn: vector, new_fn}
+		let original_fn: Vec<String> = Vec::new();
+		Options {path, original_fn, new_fn}
 	}
 
 	pub fn expand_name (&self, name: &String) -> Vec<String> {
@@ -37,7 +35,6 @@ impl Options {
 			})
 		}).collect();
 
-		let mut i = 0;
 		let mut results: Vec<String> = Vec::new();
 		names.iter().for_each(|name| {
 			if name.starts_with(pattern) {
