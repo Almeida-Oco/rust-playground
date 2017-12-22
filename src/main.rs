@@ -9,10 +9,13 @@ fn main() {
 	if !check_args(&args) {
 		return;
 	}
+	let options = Options::new(args[0].as_str(), args[1].as_str() args[2].as_str());
+	let type = vec![(String::from("OLA"), |x| {true})];
 
-	let options = Options::new(args[0].clone(), args[2].clone());
+	type.asdads();
 
-	// fs::rename(options.get_original_fn(), options.get_new_fn()).expect("Error renaming!");
+    //
+	// fs::rename(args[1].clone().as_str(), args[2].as_str()).expect("Error renaming!");
 }
 
 fn check_args (args: &Vec<String>) -> bool {

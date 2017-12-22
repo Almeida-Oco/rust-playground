@@ -3,29 +3,40 @@ use std::path;
 
 pub struct Options {
 	path: String,
-	original_fn: Vec<String>,
+	pattern: String,
+	original_fn: Vec<(String, String)>,  ///< Vector containing tuples of type (<old_name>, <new_name>)
 	new_fn: String,
+	special_chars: Vec<String>,
 }
 
 impl Options {
-	pub fn new (path: String, new_fn: String) -> Options {
-		let original_fn: Vec<String> = Vec::new();
-		Options {path, original_fn, new_fn}
+	pub fn new (path: &str, pattern: &str, new_fn: &str) -> Options {
+		let original_fn: Vec<(String, String)> = Vec::new();
+		let special_chars = vec![String::from("*"), String::from("?"), String::from(".")];
+		Options {path: path.to_string(), pattern: pattern.to_string(), original_fn, new_fn: new_fn.to_string(), special_chars}
 	}
 
-	pub fn expand_name (&self, name: &String) -> Vec<String> {
-		let mut ret = Vec::new();
+	pub fn expand_pattern (&self) {
+		let mut name = String::from("");
 
-		if name.contains("*") {
-			println!("Name contains an '*'");
-			ret = self.expand_ast(name);
+		for character in self.pattern.as_bytes().iter() {
+			let result = match self.special_chars.iter().find(|elem| { elem.as_bytes()[0] == *character }) {
+				Some(chr) => chr,
+				None 	  => "",
+			}; //Check if any special character was found
+
+			match result {
+				"*" => {
+					self.expand_ast(&name);
+					name.clear();
+				}
+				_  	=> name.push(*character as char),
+			};
 		}
-
-		ret
 	}
 
 
-	fn expand_ast (&self, pattern: &String) -> Vec<String> {
+	fn expand_ast (&self, pattern: &String) {
 		let dir_entries = fs::read_dir(path::Path::new(&self.path)).expect("Failed to open directory!");
 		let names: Vec<String> = dir_entries.filter_map(|entry| {
 			entry.ok().and_then(|dir_entry| {
@@ -41,11 +52,9 @@ impl Options {
 				results.push(name.clone());	//TODO use something other than clone
 			}
 		});
-
-		results
 	}
 
-	pub fn get_original_fn (&self) -> &Vec<String> {
+	pub fn get_original_fn (&self) -> &Vec<(String, String)> {
 		&self.original_fn
 	}
 
