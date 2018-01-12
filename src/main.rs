@@ -1,4 +1,3 @@
-#![feature(option_filter)]
 extern crate rn;
 
 use std::env;
@@ -21,6 +20,8 @@ fn main() {
 	let f_names = get_dir_f_names(&String::from("./"));
 
 	println!("f_names = {:?}", f_names);
+	let matches = match_pattern(&slices, &f_names);
+
 }
 
 fn check_args (args: &Vec<String>) -> bool {
@@ -58,6 +59,11 @@ fn extract_slices (f_name: &String) -> Vec<Symbols> {
 			prev_i = index as i32;
 		}
 	}
+	if prev_i != -1 {
+		if let Some(substr) = f_name.get((prev_i as usize)..) {
+			ret.push(Symbols::TEXT(substr.to_string()));
+		}
+	}
 	println!("{:?}", ret);
 	ret
 }
@@ -75,5 +81,37 @@ fn get_dir_f_names (path: &String) -> Vec<String> {
 		println!("Error opening dir '{}'!", path);
 	}
 
+	ret
+}
+
+fn match_pattern<'a> (pattern: &Vec<Symbols>, f_names: &'a Vec<String>) -> Vec<&'a String> {
+	let mut ret: Vec<&String> = Vec::new();
+	for name in f_names.iter() {
+		let mut i = 0;
+		let mut it = pattern.iter();
+		let mut name_matches = true;
+
+		while let Some(part) = it.next() {
+			match (part, name.get(i..)) {
+				(&Symbols::TEXT(ref text), Some(curr_name)) => {
+					println!("TEXT = {}", text);
+					if let Some((index, _)) = curr_name.match_indices(text).next() {
+						println!("MATHC");
+						i += index + text.len();
+					}
+					else {
+						name_matches = false;
+						break;
+					}
+				}
+				_ => (),
+			};
+		}
+
+		if name_matches {
+			ret.push(name);
+		}
+	}
+	println!("MATCHES : {:?}", ret);
 	ret
 }
