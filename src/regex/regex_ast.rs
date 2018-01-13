@@ -1,5 +1,6 @@
 use super::{Expression};
 
+#[derive(Debug)]
 pub struct RegexAst {
 	expr: String,
 }

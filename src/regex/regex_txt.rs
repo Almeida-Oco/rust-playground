@@ -1,12 +1,13 @@
 use super::{Expression};
 
+#[derive(Debug)]
 pub struct RegexTxt {
 	expr: String,
 }
 
 impl RegexTxt {
-	pub fn new(expr: String) -> RegexTxt {
-		RegexTxt{expr}
+	pub fn new(expr: &str) -> RegexTxt {
+		RegexTxt{expr: expr.to_string()}
 	}
 }
 

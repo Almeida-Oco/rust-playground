@@ -8,6 +8,7 @@ trait Expression {
 	fn str_matches<'a>(&self, txt: &'a str, offset: i32) -> Option<(&'a str, i32)>;
 }
 
+#[derive(Debug)]
 pub enum RegexToken {
 	AST(RegexAst),
 	TXT(RegexTxt),
