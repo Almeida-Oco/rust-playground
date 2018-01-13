@@ -18,10 +18,10 @@ fn main() {
 	}
 
 	let slices = extract_slices(&args[1]);
-	// let f_names = get_dir_f_names(&String::from("./"));
-    //
-	// println!("f_names = {:?}", f_names);
-	// let matches = match_pattern(&slices, &f_names);
+	let f_names = get_dir_f_names(&String::from("./"));
+	let matches = match_pattern(&slices, &f_names);
+
+	println!("Matches = {:?}", matches);
 }
 
 fn args_valid (args: &Vec<String>) -> bool {
@@ -77,7 +77,6 @@ fn extract_slices (f_name: &str) -> Vec<RegexToken> {
 	ret
 }
 
-
 fn get_dir_f_names<'a> (path: &'a str) -> Vec<String> {
 	let mut ret: Vec<String> = Vec::new();
 	if let Ok(dir) = fs::read_dir(path::Path::new(path)) {
@@ -94,11 +93,11 @@ fn get_dir_f_names<'a> (path: &'a str) -> Vec<String> {
 	ret
 }
 
+
 //TODO check if there is a better way without using boolean matches
-fn match_pattern<'a> (pattern: &Vec<RegexToken>, f_names: &'a Vec<&str>) -> Vec<&'a str> {
+fn match_pattern<'a> (pattern: &Vec<RegexToken>, f_names: &'a Vec<String>) -> Vec<&'a str> {
 	let mut ret: Vec<&str> = Vec::new();
 	for name in f_names.iter() {
-		println!("Name '{}' start", name);
 		let mut i: usize = 0;
 		let mut offset: i32 = 0;
 		let mut matches = true;
@@ -106,9 +105,7 @@ fn match_pattern<'a> (pattern: &Vec<RegexToken>, f_names: &'a Vec<&str>) -> Vec<
 		for part in pattern.iter() {
 			match name.get(i..) {
 				Some(rem_name) if i != name.len() => {
-					println!("	Some branch");
 					if let Some((inc_i, new_offset)) = part.matches(rem_name, offset) {
-						println!("	Some branch matched");
 						offset = new_offset;
 						i += inc_i;
 					}
@@ -121,11 +118,9 @@ fn match_pattern<'a> (pattern: &Vec<RegexToken>, f_names: &'a Vec<&str>) -> Vec<
 			}
 		}
 
-
 		if matches {
 			ret.push(name);
 		}
-		println!("Name '{}' over", name);
 	}
 	ret
 }
@@ -184,11 +179,11 @@ mod tests {
 		let pattern4 = vec![RegexToken::AST(AST::new())];
 		let pattern5 = vec![RegexToken::AST(AST::new()), RegexToken::TXT(TXT::new("foo")), RegexToken::AST(AST::new())];
 
-		let names1 = vec!["barfo", "foo", "barfoo", "fobo"];
-		let names2 = vec!["fobar", "foo", "barfoo", "foobar", "fobo"];
-		let names3 = vec!["foobar", "fobar", "foooobar", "barfoo", "barfoo", "foo", "bar"];
-		let names4 = vec!["foo", "", "bar"];
-		let names5 = vec!["bar", "foo", "barfoo", "foobar", "fofoo", "foofoo"];
+		let names1 = vec![String::from("barfo"), String::from("foo"), String::from("barfoo"), String::from("fobo")];
+		let names2 = vec![String::from("fobar"), String::from("foo"), String::from("barfoo"), String::from("foobar"), String::from("fobo")];
+		let names3 = vec![String::from("foobar"), String::from("fobar"), String::from("foooobar"), String::from("barfoo"), String::from("barfoo"), String::from("foo"), String::from("bar")];
+		let names4 = vec![String::from("foo"), String::from(""), String::from("bar")];
+		let names5 = vec![String::from("bar"), String::from("foo"), String::from("barfoo"), String::from("foobar"), String::from("fofoo"), String::from("foofoo")];
 
 		assert_eq!(match_pattern(&pattern1, &names1), vec!["foo", "barfoo"],
 			"\n1 - match_pattern({:?}, {:?})", pattern1, names1);
