@@ -12,8 +12,8 @@ impl RegexAst {
 }
 
 impl Expression for RegexAst {
-	fn str_matches<'a>(&self, txt: &'a str, _offset: i32) -> Option<(&'a str, i32)> {
-		Some((txt, -1))
+	fn str_matches(&self, txt: &str, _offset: i32) -> Option<(usize, i32)> {
+		Some((0, -1))
 	}
 }
 

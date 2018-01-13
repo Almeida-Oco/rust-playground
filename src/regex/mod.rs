@@ -5,7 +5,7 @@ use self::regex_ast::{RegexAst};
 use self::regex_txt::{RegexTxt};
 
 trait Expression {
-	fn str_matches<'a>(&self, txt: &'a str, offset: i32) -> Option<(&'a str, i32)>;
+	fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)>;
 }
 
 #[derive(Debug)]
@@ -24,6 +24,15 @@ impl PartialEq for RegexToken {
 				t1 == t2
 			},
 			_ => false,
+		}
+	}
+}
+
+impl RegexToken {
+	pub fn matches(&self, text: &str, offset: i32) -> Option<(usize, i32)> {
+		match self {
+			&RegexToken::AST(ref ast) => ast.str_matches(text, offset),
+			&RegexToken::TXT(ref txt) => txt.str_matches(text, offset),
 		}
 	}
 }

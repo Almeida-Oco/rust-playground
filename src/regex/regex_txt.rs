@@ -12,10 +12,10 @@ impl RegexTxt {
 }
 
 impl Expression for RegexTxt {
-	fn str_matches<'a>(&self, txt: &'a str, offset: i32) -> Option<(&'a str, i32)> {
+	fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)> {
 		if let Some((index, _)) = txt.match_indices(&self.expr).next() {
-			if let (Some(substr), true) = (txt.get(index..), (offset == -1 || index <= (offset as usize))) {
-				return Some((substr, 0));
+			if offset == -1 || index <= (offset as usize) {
+				return Some((index, 0));
 			}
 		}
 		None
