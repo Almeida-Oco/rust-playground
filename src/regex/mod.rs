@@ -104,7 +104,6 @@ impl PartialEq for RegexTxt {
 	}
 }
 
-
 fn find_next_symbol<'txt>(text: &'txt str) -> Option<(&'txt str, usize)> {
 	let mut ret: Option<(&str, usize)> = Some(("", usize::max_value()));
 
@@ -118,5 +117,12 @@ fn find_next_symbol<'txt>(text: &'txt str) -> Option<(&'txt str, usize)> {
 	match ret {
 		Some((text, _)) if text != "" => ret,
 		_ => None
+	}
+}
+
+#[cfg(test)]
+impl RegexTxt {
+	pub fn new2 (txt: &String) -> RegexTxt {
+		RegexTxt{expr: txt.clone()}
 	}
 }

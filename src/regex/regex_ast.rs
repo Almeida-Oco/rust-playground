@@ -11,7 +11,7 @@ impl RegexExp for RegexAst {
 		match txt.chars().nth(0) {
 			Some(id_chr) if id_chr.is_digit(10) => {
 				let id = id_chr.to_digit(10).unwrap();
-				Some( (RegexToken::AST(RegexAst{id}) , 1) )
+				Some( (RegexToken::AST(RegexAst{id}) , 2) )
 			},
 			Some(id_chr) => {
 				eprintln!("Found non numeric char after '*': {}\n{}", id_chr, err_msg);
@@ -34,7 +34,14 @@ impl RegexExp for RegexAst {
 }
 
 impl PartialEq for RegexAst {
-	fn eq(&self, _other: &RegexAst) -> bool {
-		true
+	fn eq(&self, other: &RegexAst) -> bool {
+		self.id == other.id
+	}
+}
+
+#[cfg(test)]
+impl RegexAst {
+	pub fn new2(id: u32) -> RegexAst {
+		RegexAst{ id }
 	}
 }

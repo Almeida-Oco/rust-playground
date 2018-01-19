@@ -58,14 +58,14 @@ fn extract_slices (f_name: &str) -> Option<Vec<RegexToken>> {
 			Some((token, offset)) => {
 				if unique_id(&token, &ret) {
 					ret.push(token);
-					i += 1 + offset;
+					i += offset;
 				}
 				else {
 					eprintln!("Duplicate ID for '{:?}', ID = {}", token, token.get_id());
 					return None
 				}
 			},
-			None if i >= f_name.len() => (), //end of string reached
+			None if i >= f_name.len() => break, //end of string reached
 			None => return None, //Some error before end of string
 		}
 	}
@@ -101,25 +101,28 @@ fn match_pattern<'a> (pattern: &Vec<RegexToken>, f_names: &'a Vec<String>) -> Ve
 	for name in f_names.iter() {
 		let mut i: usize = 0;
 		let mut offset: i32 = 0;
-		let mut matches = true;
+		let mut matches = 0;
 
+
+		println!("NAME = '{}'", name);
 		for part in pattern.iter() {
+			println!("	{:?}", name.get(i..));
 			match name.get(i..) {
-				Some(rem_name) if i != name.len() => {
+				Some(rem_name) => {
 					if let Some((inc_i, new_offset)) = part.matches(rem_name, offset) {
 						offset = new_offset;
 						i += inc_i;
+						matches += 1;
 					}
 					else {
-						matches = false;
 						break;
 					}
 				},
-				_ => break,
+				None => break,
 			}
 		}
 
-		if matches {
+		if matches == pattern.len() {
 			ret.push(name);
 		}
 	}
@@ -138,75 +141,82 @@ mod tests {
 
 	#[test]
 	fn test_extract_slices() {
-		let name1 = String::from("*0foo");
 		let foo = String::from("foo");
 		let bar = String::from("bar");
 		let b = String::from("b");
 
-		let vec1 = vec![RegexToken::AST(ast{id: 0}), RegexToken::TXT(txt{expr: foo})];
+		let name1 = String::from("*0foo");
+		let vec1 = vec![RegexToken::AST(ast::new2(0)), RegexToken::TXT(txt::new2(&foo))];
 
 		let name2 = String::from("foo*1");
-		let vec2 = vec![RegexToken::TXT(txt{expr: foo}), RegexToken::AST(ast{id: 1})];
+		let vec2 = vec![RegexToken::TXT(txt::new2(&foo)), RegexToken::AST(ast::new2(1))];
 
 		let name3 = String::from("*1foo*2b");
-		let vec3 = vec![RegexToken::AST(RegexAst::new()), RegexToken::TXT(RegexTxt::new("foo")), RegexToken::AST(RegexAst::new()), RegexToken::TXT(RegexTxt::new("b"))];
+		let vec3 = vec![RegexToken::AST(ast::new2(1)), RegexToken::TXT(txt::new2(&foo)), RegexToken::AST(ast::new2(2)), RegexToken::TXT(txt::new2(&b))];
 
 		let name4 = String::from("*2");
-		let vec4 = vec![RegexToken::AST(RegexAst::new())];
+		let vec4 = vec![RegexToken::AST(ast::new2(2))];
 
 		let name5 = String::from("foo");
-		let vec5 = vec![RegexToken::TXT(RegexTxt::new("foo"))];
+		let vec5 = vec![RegexToken::TXT(txt::new2(&foo))];
 
-		assert_eq!(extract_slices(&name1), vec1, "\nextract_slices({})", name1);
-		assert_eq!(extract_slices(&name2), vec2, "\nextract_slices({})", name2);
-		assert_eq!(extract_slices(&name3), vec3, "\nextract_slices({})", name3);
-		assert_eq!(extract_slices(&name4), vec4, "\nextract_slices({})", name4);
-		assert_eq!(extract_slices(&name5), vec5, "\nextract_slices({})", name5);
+		assert_eq!(extract_slices(&name1), Some(vec1), "\nextract_slices({})", name1);
+		assert_eq!(extract_slices(&name2), Some(vec2), "\nextract_slices({})", name2);
+		assert_eq!(extract_slices(&name3), Some(vec3), "\nextract_slices({})", name3);
+		assert_eq!(extract_slices(&name4), Some(vec4), "\nextract_slices({})", name4);
+		assert_eq!(extract_slices(&name5), Some(vec5), "\nextract_slices({})", name5);
 	}
 
 
 	#[test]
 	fn test_match_pattern() {
-		let pattern1 = vec![RegexToken::AST(RegexAst::new()), RegexToken::TXT(RegexTxt::new("foo"))];
-		let pattern2 = vec![RegexToken::TXT(RegexTxt::new("foo")), RegexToken::AST(RegexAst::new())];
-		let pattern3 = vec![RegexToken::TXT(RegexTxt::new("foo")), RegexToken::AST(RegexAst::new()), RegexToken::TXT(RegexTxt::new("bar"))];
-		let pattern4 = vec![RegexToken::AST(RegexAst::new())];
-		let pattern5 = vec![RegexToken::AST(RegexAst::new()), RegexToken::TXT(RegexTxt::new("foo")), RegexToken::AST(RegexAst::new())];
+		let barfo = String::from("barfo");
+		let foo = String::from("foo");
+		let bar = String::from("bar");
+		let barfoo = String::from("barfoo");
+		let foobar = String::from("foobar");
+		let foooobar = String::from("foooobar");
+		let fobo = String::from("fobo");
+		let foofoo = String::from("foofoo");
+		let fofoo = String::from("fofoo");
+		let empty = String::from("");
 
-		let names1 = vec![String::from("barfo"), String::from("foo"), String::from("barfoo"), String::from("fobo")];
-		let names2 = vec![String::from("fobar"), String::from("foo"), String::from("barfoo"), String::from("foobar"), String::from("fobo")];
-		let names3 = vec![String::from("foobar"), String::from("fobar"), String::from("foooobar"), String::from("barfoo"), String::from("barfoo"), String::from("foo"), String::from("bar")];
-		let names4 = vec![String::from("foo"), String::from(""), String::from("bar")];
-		let names5 = vec![String::from("bar"), String::from("foo"), String::from("barfoo"), String::from("foobar"), String::from("fofoo"), String::from("foofoo")];
+		let pattern1 = vec![RegexToken::AST(ast::new2(0)), RegexToken::TXT(txt::new2(&foo))];
+		let pattern2 = vec![RegexToken::TXT(txt::new2(&foo)), RegexToken::AST(ast::new2(0))];
+		let pattern3 = vec![RegexToken::TXT(txt::new2(&foo)), RegexToken::AST(ast::new2(0)), RegexToken::TXT(txt::new2(&bar))];
+		let pattern4 = vec![RegexToken::AST(ast::new2(0))];
+		let pattern5 = vec![RegexToken::AST(ast::new2(0)), RegexToken::TXT(txt::new2(&foo)), RegexToken::AST(ast::new2(0))];
 
-		assert_eq!(match_pattern(&pattern1, &names1), vec!["foo", "barfoo"],
-			"\n1 - match_pattern({:?}, {:?})", pattern1, names1);
-		assert_eq!(match_pattern(&pattern2, &names2), vec!["foo", "foobar"],
-			"\n2 - match_pattern({:?}, {:?})", pattern2, names2);
-		assert_eq!(match_pattern(&pattern3, &names3), vec!["foobar", "foooobar"],
-			"\n3 - match_pattern({:?}, {:?})", pattern3, names3);
-		assert_eq!(match_pattern(&pattern4, &names4), vec!["foo", "", "bar"],
-			"\n4 - match_pattern({:?}, {:?})", pattern4, names4);
-		assert_eq!(match_pattern(&pattern5, &names5), vec!["foo", "barfoo", "foobar", "fofoo", "foofoo"],
-			"\n5 - match_pattern({:?}, {:?})", pattern5, names5);
+		let names = vec![barfo, foo, bar, barfoo, foobar, foooobar, fobo, foofoo, fofoo, empty];
+
+		assert_eq!(match_pattern(&pattern1, &names), vec!["foo", "barfoo", "foobar", "foooobar", "foofoo", "fofoo"],
+			"\n1 - match_pattern({:?}, {:?})", pattern1, names);
+		assert_eq!(match_pattern(&pattern2, &names), vec!["foo", "foobar", "foooobar", "foofoo"],
+			"\n2 - match_pattern({:?}, {:?})", pattern2, names);
+		assert_eq!(match_pattern(&pattern3, &names), vec!["foobar", "foooobar"],
+			"\n3 - match_pattern({:?}, {:?})", pattern3, names);
+		assert_eq!(match_pattern(&pattern4, &names), names,
+			"\n4 - match_pattern({:?}, {:?})", pattern4, names);
+		assert_eq!(match_pattern(&pattern5, &names), vec!["foo", "barfoo", "foobar", "foooobar", "foofoo", "fofoo"],
+			"\n5 - match_pattern({:?}, {:?})", pattern5, names);
 	}
 
 
-	#[test]
-	fn test_find_next_of() {
-		let txt1 = "foo*bar";
-		let txt2 = "foobar";
-		let txt3 = "*bar";
-		let txt4 = "foo*";
-		let RegexToken = vec!["*", "!"];
-
-		assert_eq!(find_next_of(txt1, &RegexToken), Some(("*", 3)),
-			"\nfind_next_of({}, {:?})", txt1, RegexToken);
-		assert_eq!(find_next_of(txt2, &RegexToken), None,
-			"\nfind_next_of({}, {:?})", txt2, RegexToken);
-		assert_eq!(find_next_of(txt3, &RegexToken), Some(("*", 0)),
-			"\nfind_next_of({}, {:?})", txt3, RegexToken);
-		assert_eq!(find_next_of(txt4, &RegexToken), Some(("*", 3)),
-			"\nfind_next_of({}, {:?})", txt4, RegexToken);
-	}
+	// #[test]
+	// fn test_find_next_of() {
+	// 	let txt1 = "foo*bar";
+	// 	let txt2 = "foobar";
+	// 	let txt3 = "*bar";
+	// 	let txt4 = "foo*";
+	// 	let RegexToken = vec!["*", "!"];
+    //
+	// 	assert_eq!(find_next_of(txt1, &RegexToken), Some(("*", 3)),
+	// 		"\nfind_next_of({}, {:?})", txt1, RegexToken);
+	// 	assert_eq!(find_next_of(txt2, &RegexToken), None,
+	// 		"\nfind_next_of({}, {:?})", txt2, RegexToken);
+	// 	assert_eq!(find_next_of(txt3, &RegexToken), Some(("*", 0)),
+	// 		"\nfind_next_of({}, {:?})", txt3, RegexToken);
+	// 	assert_eq!(find_next_of(txt4, &RegexToken), Some(("*", 3)),
+	// 		"\nfind_next_of({}, {:?})", txt4, RegexToken);
+	// }
 }
