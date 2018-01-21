@@ -4,14 +4,14 @@ use regex::RegexToken;
 use std::collections::BTreeMap;
 
 pub struct Expression<'token> {
-    expression: Vec<Box<&'token RegexToken>>,
-    wildcards: BTreeMap<String, Vec<&'token Box<&'token RegexToken>>>,
+    expression: Vec<Box<RegexToken>>,
+    wildcards: BTreeMap<String, Vec<&'token Box<RegexToken>>>,
 }
 
 impl<'token> Expression<'token> {
     pub fn new() -> Expression<'token> {
-        let wildcards: BTreeMap<String, Vec<&Box<&'token RegexToken>>> = BTreeMap::new();
-        let expression: Vec<Box<&'token RegexToken>> = Vec::new();
+        let wildcards: BTreeMap<String, Vec<&Box<RegexToken>>> = BTreeMap::new();
+        let expression: Vec<Box<RegexToken>> = Vec::new();
         Expression {
             expression,
             wildcards,
@@ -49,26 +49,21 @@ impl<'token> Expression<'token> {
         matches == self.expression.len()
     }
 
-    pub fn add_token(&'token mut self, token: Box<&'token RegexToken>) -> bool {
+    pub fn add_token(&'token mut self, token: Box<RegexToken>) -> bool {
         let key = token.to_string();
+        let unique = token.get_expr() != "" && self.unique_id(&token);
         self.expression.push(token);
-        if token.get_expr() != "" && self.unique_id(&token) {
+        if unique {
             self.wildcards
                 .entry(key.to_string())
                 .or_insert(Vec::new())
                 .push(self.expression.last().unwrap());
-            true
-        } else {
-            eprintln!(
-                "Duplicate ID for '{}', ID = {}",
-                token.get_expr(),
-                token.get_id()
-            );
-            false
         }
+
+        unique
     }
 
-    fn unique_id(&self, token: &RegexToken) -> bool {
+    fn unique_id(&self, token: &Box<RegexToken>) -> bool {
         if let Some(vector) = self.wildcards.get(token.get_expr()) {
             vector
                 .iter()

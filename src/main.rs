@@ -16,8 +16,8 @@ fn main() {
     let extracted_slices = extract_slices(&args[1]);
     let dir_f_names = get_dir_f_names(&String::from("./"));
 
-    if let (Some(slices), Some(f_names)) = (extracted_slices, dir_f_names) {
-        let matches = match_pattern(&slices, &f_names);
+    if let (Some(regex), Some(f_names)) = (extracted_slices, dir_f_names) {
+        let matches = regex.match_names(&f_names);
         println!("Matches = {:?}", matches);
     }
 }
@@ -60,16 +60,17 @@ fn valid_target_name(name: &String) -> bool {
 
 // '*' '.' '?'
 fn extract_slices(f_name: &str) -> Option<Expression> {
-    let mut ret: Expression = Expression::new();
+    let ret: Expression = Expression::new();
     let mut i: usize = 0;
 
     while let Some(rem_txt) = f_name.get(i..) {
         let new_token = RegexToken::from_str(rem_txt);
         match new_token {
-            Some((token, offset)) => {
-                if !ret.add_token(&token) {
+            Some((token, inc_i)) => {
+                if !ret.add_token(token) {
                     return None;
                 }
+                i += inc_i
             }
             None if i >= f_name.len() => break, //end of string reached
             None => return None,                //Some error before end of string

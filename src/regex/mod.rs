@@ -19,7 +19,7 @@ impl RegexToken {
         match (txt.chars().nth(0), txt.get(1..)) {
             (Some('*'), Some(rem_txt)) => RegexAst::from_str(rem_txt),
             (Some('?'), Some(rem_txt)) => RegexQst::from_str(rem_txt),
-            (Some(chr), Some(rem_txt)) => RegexTxt::from_str(rem_txt),
+            (Some(_), Some(rem_txt)) => RegexTxt::from_str(rem_txt),
             _ => None,
         }
     }
