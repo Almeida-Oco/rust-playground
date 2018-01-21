@@ -87,3 +87,21 @@ impl RegexTxt {
         RegexTxt { expr: txt.clone() }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_find_next() {
+        let txt1 = "foo*bar";
+        let txt2 = "*foo";
+        let txt3 = "foo*";
+        let txt4 = "foo?";
+
+        assert_eq!(find_next_symbol(txt1), Some(("*", 3)));
+        assert_eq!(find_next_symbol(txt2), Some(("*", 0)));
+        assert_eq!(find_next_symbol(txt3), Some(("*", 3)));
+        assert_eq!(find_next_symbol(txt4), Some(("?", 3)));
+    }
+}

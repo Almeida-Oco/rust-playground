@@ -1,17 +1,21 @@
 pub mod regex;
 
-use regex::RegexToken;
+use std::result::Result;
+use std::fmt::{Display, Error, Formatter};
+use std::rc::Rc;
 use std::collections::BTreeMap;
 
-pub struct Expression<'token> {
-    expression: Vec<Box<RegexToken>>,
-    wildcards: BTreeMap<String, Vec<&'token Box<RegexToken>>>,
+use regex::RegexToken;
+
+pub struct Expression {
+    expression: Vec<Rc<Box<RegexToken>>>,
+    wildcards: BTreeMap<String, Vec<Rc<Box<RegexToken>>>>,
 }
 
-impl<'token> Expression<'token> {
-    pub fn new() -> Expression<'token> {
-        let wildcards: BTreeMap<String, Vec<&Box<RegexToken>>> = BTreeMap::new();
-        let expression: Vec<Box<RegexToken>> = Vec::new();
+impl Expression {
+    pub fn new() -> Expression {
+        let expression: Vec<Rc<Box<RegexToken>>> = Vec::new();
+        let wildcards: BTreeMap<String, Vec<Rc<Box<RegexToken>>>> = BTreeMap::new();
         Expression {
             expression,
             wildcards,
@@ -28,7 +32,7 @@ impl<'token> Expression<'token> {
         ret
     }
 
-    fn match_name<'a>(&self, name: &String) -> bool {
+    fn match_name(&self, name: &String) -> bool {
         let mut i: usize = 0;
         let mut offset: i32 = 0;
         let mut matches = 0;
@@ -49,27 +53,42 @@ impl<'token> Expression<'token> {
         matches == self.expression.len()
     }
 
-    pub fn add_token(&'token mut self, token: Box<RegexToken>) -> bool {
+    pub fn add_token(&mut self, token: Box<RegexToken>) -> bool {
         let key = token.to_string();
-        let unique = token.get_expr() != "" && self.unique_id(&token);
-        self.expression.push(token);
+        let is_txt = token.get_expr() == "";
+        let unique = !is_txt && self.unique_id(&token);
+
+        let value = Rc::new(token);
         if unique {
             self.wildcards
                 .entry(key.to_string())
                 .or_insert(Vec::new())
-                .push(self.expression.last().unwrap());
+                .push(Rc::clone(&value));
         }
+        self.expression.push(value);
 
-        unique
+        (unique || is_txt)
     }
 
     fn unique_id(&self, token: &Box<RegexToken>) -> bool {
         if let Some(vector) = self.wildcards.get(token.get_expr()) {
             vector
                 .iter()
-                .any(|&vec_token| token.get_id() == vec_token.get_id())
+                .any(|ref vec_token| token.get_id() == vec_token.get_id())
         } else {
-            false
+            true
         }
+    }
+}
+
+impl Display for Expression {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        let mut err: Result<(), Error> = Ok(());
+        self.expression.iter().any(|elem| {
+            err = write!(f, "{}", elem);
+            err.is_err()
+        });
+
+        err
     }
 }

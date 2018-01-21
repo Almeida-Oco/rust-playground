@@ -1,5 +1,6 @@
 extern crate rn;
 
+use std::{thread, time};
 use std::env;
 use std::fs;
 use std::path;
@@ -13,10 +14,11 @@ fn main() {
     if !args_valid(&args) {
         return;
     }
-    let extracted_slices = extract_slices(&args[1]);
+
+    let regex_ops = extract_slices(&args[1]);
     let dir_f_names = get_dir_f_names(&String::from("./"));
 
-    if let (Some(regex), Some(f_names)) = (extracted_slices, dir_f_names) {
+    if let (Some(regex), Some(f_names)) = (regex_ops, dir_f_names) {
         let matches = regex.match_names(&f_names);
         println!("Matches = {:?}", matches);
     }
@@ -58,9 +60,8 @@ fn valid_target_name(name: &String) -> bool {
     false
 }
 
-// '*' '.' '?'
 fn extract_slices(f_name: &str) -> Option<Expression> {
-    let ret: Expression = Expression::new();
+    let mut ret: Expression = Expression::new();
     let mut i: usize = 0;
 
     while let Some(rem_txt) = f_name.get(i..) {
@@ -75,6 +76,7 @@ fn extract_slices(f_name: &str) -> Option<Expression> {
             None if i >= f_name.len() => break, //end of string reached
             None => return None,                //Some error before end of string
         }
+        // thread::sleep(time::Duration::from_millis(500));
     }
 
     Some(ret)
@@ -105,13 +107,13 @@ mod tests {
     type txt = RegexTxt;
 
     #[test]
-    fn test_extract_slices<T>() where T: RegexToken<T> {
+    fn test_extract_slices() {
         let foo = String::from("foo");
         let bar = String::from("bar");
         let b = String::from("b");
 
         let name1 = String::from("*0foo");
-        let vec1 = vec![
+        let vec1: Vec<Box<RegexToken>> = vec![
             ast::new2(0),
             txt::new2(&foo),
         ];
