@@ -34,7 +34,7 @@ impl Expression {
 
     fn match_name(&self, name: &String) -> bool {
         let mut i: usize = 0;
-        let mut offset: i32 = 0;
+        let mut offset: i32 = -1;
         let mut matches = 0;
 
         for part in self.expression.iter() {
