@@ -1,4 +1,5 @@
 use std::io;
+use std::collections::HashMap;
 use std::net::ToSocketAddrs;
 use futures::Future;
 use native_tls::TlsConnector;
@@ -6,31 +7,92 @@ use tokio_core::net::TcpStream;
 use tokio_core::reactor::Core;
 use tokio_tls::TlsConnectorExt;
 use tokio_io;
-use rustc_serialize::json;
+use serde_json;
 
 const COINMARKETCAP: &str = "api.coinmarketcap.com";
 const HTTPS_PORT: &str = ":443";
 const PATH_START: &str = "/v1/ticker/";
 
-pub fn get_coin_info(coin: &str) -> String {
+#[derive(Deserialize, Debug)]
+struct CoinJsonHolder {
+    id: String,
+    name: String,
+    symbol: String,
+    rank: String,
+    price_usd: String,
+    price_btc: String,
+    market_cap_usd: String,
+    percent_change_1h: String,
+    percent_change_24h: String,
+    percent_change_7d: String,
+}
+
+#[derive(Debug)]
+pub struct Coin {
+    name: String,
+    symbol: String,
+    rank: u32,
+    price_usd: f32,
+    price_btc: f32,
+    market_cap: f64,
+    change_1h: f32,
+    change_24h: f32,
+    change_7d: f32,
+}
+
+impl Coin {
+    fn from_coin_holder(holder: &CoinJsonHolder) -> Result<Coin, String> {
+        let rank = holder.rank.parse::<u32>();
+        let price_usd = holder.price_usd.parse::<f32>();
+        let price_btc = holder.price_btc.parse::<f32>();
+        let market_cap = holder.market_cap_usd.parse::<f64>();
+        let change_1h = holder.percent_change_1h.parse::<f32>();
+        let change_24h = holder.percent_change_24h.parse::<f32>();
+        let change_7d = holder.percent_change_7d.parse::<f32>();
+
+        if let Err(err) = rank {
+            Err(format!("Error parsing 'rank': {:?}", err))
+        } else if let Err(err) = price_usd {
+            Err(format!("Error parsing 'price_usd': {:?}", err))
+        } else if let Err(err) = price_btc {
+            Err(format!("Error parsing 'price_btc': {:?}", err))
+        } else if let Err(err) = market_cap {
+            Err(format!("Error parsing 'market_cap': {:?}", err))
+        } else if let Err(err) = change_1h {
+            Err(format!("Error parsing 'change_1h': {:?}", err))
+        } else if let Err(err) = change_24h {
+            Err(format!("Error parsing 'change_24h': {:?}", err))
+        } else if let Err(err) = change_7d {
+            Err(format!("Error parsing 'change_7d': {:?}", err))
+        } else {
+            Ok(Coin {
+                name: holder.name.clone(),
+                symbol: holder.symbol.clone(),
+                rank: rank.unwrap(),
+                price_usd: price_usd.unwrap(),
+                price_btc: price_btc.unwrap(),
+                market_cap: market_cap.unwrap(),
+                change_1h: change_1h.unwrap(),
+                change_24h: change_24h.unwrap(),
+                change_7d: change_7d.unwrap(),
+            })
+        }
+    }
+}
+
+pub fn get_coin_info(coin: &str) -> Result<Coin, String> {
     let path = String::from(PATH_START) + coin + "/";
     let response = do_request(COINMARKETCAP, HTTPS_PORT, &path);
-
-    println!("Response {}", response.get(0..20).unwrap());
-
-    let json_data = response
-        .get((response.find("\r\n\r\n[").unwrap() + 4)..)
-        .unwrap();
-
-    json::from_str(json_data);
-    let mut it = json::Parser::new(json_data.chars());
-    let builder = json::Builder::new(it);
-    println!("Built!");
-    if let Ok(result) = builder.build() {
-        println!("{}", result);
+    match response.find("\r\n\r\n[") {
+        Some(index) => {
+            let json_data = response.get((index + 4)..).unwrap();
+            match serde_json::from_str::<Vec<CoinJsonHolder>>(json_data) {
+                Ok(result) => Coin::from_coin_holder(result.iter().next().unwrap()),
+                Err(error) => Err(format!("Error parsing response: {}", error)),
+            }
+        }
+        None => Err(format!("{}", response)),
     }
-
-    String::new()
 }
 
 fn do_request(address: &str, port: &str, path: &str) -> String {
