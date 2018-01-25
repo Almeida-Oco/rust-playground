@@ -26,6 +26,16 @@ struct CoinJsonHolder {
     percent_change_24h: String,
     percent_change_7d: String,
 }
+#[derive(Deserialize, Debug)]
+struct NameHolder {
+    id: String,
+}
+
+impl NameHolder {
+    pub fn get_name(self) -> String {
+        self.id
+    }
+}
 
 #[derive(Debug)]
 pub struct Coin {
@@ -88,6 +98,26 @@ pub fn get_coin_info(coin: &str) -> Result<Coin, String> {
             let json_data = response.get((index + 4)..).unwrap();
             match serde_json::from_str::<Vec<CoinJsonHolder>>(json_data) {
                 Ok(result) => Coin::from_coin_holder(result.iter().next().unwrap()),
+                Err(error) => Err(format!("Error parsing response: {}", error)),
+            }
+        }
+        None => Err(format!("{}", response)),
+    }
+}
+
+pub fn get_all_names() -> Result<Vec<String>, String> {
+    let path = String::from(PATH_START) + "?start=0&limit=0";
+    let response = do_request(COINMARKETCAP, HTTPS_PORT, &path);
+    match response.find("\r\n\r\n[") {
+        Some(index) => {
+            let json_data = response.get((index + 4)..).unwrap();
+            match serde_json::from_str::<Vec<NameHolder>>(json_data) {
+                Ok(vec) => {
+                    let mut ret: Vec<String> = Vec::new();
+                    vec.into_iter()
+                        .for_each(|name_holder| ret.push(name_holder.get_name()));
+                    Ok(ret)
+                }
                 Err(error) => Err(format!("Error parsing response: {}", error)),
             }
         }
