@@ -1,80 +1,113 @@
 use rusqlite::Connection;
 
 struct Database {
-    file_name: &str,
-    conn: Option<Connection>,
+    file_name: String,
+    conn: Connection,
 }
 
-struct Coin {
+pub struct Coin {
     name: String,
     amount: f64,
-    buy_price_usb: f64,
+    buy_price_usd: f64,
     buy_price_btc: f64,
 }
 
+//Public methods
 impl Database {
     pub fn new(file_name: &str) -> Database {
         Database {
-            file_name,
-            conn: None,
+            file_name: file_name.to_string(),
+            conn: Connection::open(file_name).expect("Failed to open connection!"),
         }
     }
 
-    fn check_conn(&mut self) -> &Connection {
-        if let Some(connection) = self.conn {
-            connection
-        } else {
-            self.conn = Connection::open_in_memory(self.file_name).ok();
-            self.conn
-                .expect("Error opening database: '{}'", self.file_name)
-        }
-    }
-
-    fn get_user_info(&mut self, name: &str) -> Option<(String, f32)> {
-        let conn = self.check_conn();
+    pub fn get_user_info(&mut self, name: &str) -> Option<(String, f64)> {
         let statement = format!("SELECT * FROM User WHERE User.name == \"{}\"", name);
 
-        let stmt = conn.prepare(&statement)
-            .expect("Failed to prepare statement: '{}'", statement);
-        let person_it = stmt.query_map(&[], |row| (row.get(0), row.get(1)))
-            .expect("Failed to query statement: '{}'", statement);
+        let mut stmt = self.conn
+            .prepare(&statement)
+            .expect(&format!("Failed to prepare statement: '{}'", statement));
+        let mut person_it = stmt.query_map(&[], |row| (row.get(0), row.get(1)))
+            .expect(&format!("Failed to query statement: '{}'", statement));
 
-        person_it.next()
+        match person_it.next() {
+            Some(ret) => ret.ok(),
+            None => None,
+        }
     }
 
-    fn get_user_coins(&mut self, name: &str) -> Option<Vec<Coin>> {
-        let conn = self.check_conn();
+    pub fn get_user_coins(&mut self, name: &str) -> Option<Vec<Coin>> {
         let statement = format!(
             "SELECT name,amount,buy_price_btc,buy_price_usd FROM Coin WHERE Coin.owner == \"{}\"",
             name
         );
 
-        if self.user_exists() {
-            let stmt = conn.prepare(&statement)
-                .expect("Failed to prepare statemet: '{}'", statement);
+        if self.user_exists(name) {
+            let mut stmt = self.conn
+                .prepare(&statement)
+                .expect(&format!("Failed to prepare statemet: '{}'", statement));
             let person_it = stmt.query_map(&[], |row| Coin {
                 name: row.get(0),
                 amount: row.get(1),
                 buy_price_usd: row.get(2),
                 buy_price_btc: row.get(3),
-            }).expect("Failed to query statement: '{}'", statement);
+            }).expect(&format!("Failed to query statement: '{}'", statement));
 
-            Some(person_it.collect::<Vec<Coin>>())
+            let ret: Vec<Coin> = person_it.filter_map(|elem| elem.ok()).collect();
+            Some(ret)
         } else {
             eprintln!("No user '{}' found in database!", name);
             None
         }
     }
 
-    fn user_exists(&mut self, name: &str) -> bool {
-        let conn = self.check_conn();
+    pub fn insert_user(&mut self, name: &str, start_amount: f64) -> bool {
+        let statement = format!("INSERT INTO User VALUES (\"{}\", {})", name, start_amount);
+        if !self.user_exists(name) {
+            self.conn
+                .execute(&statement, &[])
+                .expect(&format!("Failed to execute statement: '{}'", statement));
+            true
+        } else {
+            eprintln!("User '{}' already exists!", name);
+            false
+        }
+    }
+
+    pub fn insert_coin(&mut self, user_name: &str, coin: Coin) -> bool {
+        let statement = format!("INSERT INTO Coin VALUES {}", coin.to_str());
+        if self.user_exists(user_name) {
+            self.conn
+                .execute(&statement, &[])
+                .expect(&format!("Failed to execute statement: '{}'", statement));
+            true
+        } else {
+            eprintln!("User '{}' does not exist!", user_name);
+            false
+        }
+    }
+}
+
+//Private methods
+impl Database {
+    fn user_exists(&self, name: &str) -> bool {
         let statement = format!("SELECT name FROM User WHERE User.name == \"{}\"", name);
 
-        let stmt = conn.prepare(&statement)
-            .expect("Failed to prepare statement: '{}'", statement);
-        let person_it = stmt.query_map(&[], |row| row.get(0))
-            .expect("Failed to query statement: '{}'", statement);
+        let mut stmt = self.conn
+            .prepare(&statement)
+            .expect(&format!("Failed to prepare statement: '{}'", statement));
+        let mut person_it = stmt.query(&[])
+            .expect(&format!("Failed to query statement: '{}'", statement));
 
         person_it.next().is_some()
+    }
+}
+
+impl Coin {
+    fn to_str(&self) -> String {
+        format!(
+            "(\"{}\", {}, {}, {})",
+            self.name, self.amount, self.buy_price_usd, self.buy_price_btc
+        )
     }
 }

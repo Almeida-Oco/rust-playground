@@ -10,6 +10,7 @@ extern crate tokio_io;
 extern crate tokio_tls;
 
 mod net_io;
+mod db_io;
 
 fn main() {
     let btc = net_io::get_coin_info("bitcoin");

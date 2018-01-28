@@ -5,14 +5,14 @@ DROP TABLE IF EXISTS Coin;
 
 CREATE TABLE User (
 	name TEXT PRIMARY KEY,
-	start_amount NUMBER
+	start_amount REAL
 );
 
 CREATE TABLE Coin (
 	name TEXT PRIMARY KEY,
-	amount NUMBER,
-	buy_price_usd NUMBER,
-	buy_price_btc NUMBER,
+	amount REAL,
+	buy_price_usd REAL,
+	buy_price_btc REAL,
 	owner TEXT,
 	FOREIGN KEY (owner) REFERENCES User (name)
 );
