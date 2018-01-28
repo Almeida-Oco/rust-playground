@@ -1,5 +1,6 @@
 extern crate futures;
 extern crate native_tls;
+extern crate rusqlite;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

@@ -1,5 +1,4 @@
 use std::io;
-use std::collections::HashMap;
 use std::net::ToSocketAddrs;
 use futures::Future;
 use native_tls::TlsConnector;
