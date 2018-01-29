@@ -5,15 +5,21 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate time;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_tls;
 
 use std::env;
 use std::cmp;
+use std::fmt;
 
 mod net_io;
 mod db_io;
+
+const RED: &str = "\x1b[31m";
+const GREEN: &str = "\x1b[32m";
+const RESET: &str = "\x1b[0m";
 
 #[derive(Debug)]
 struct Coin {
@@ -29,13 +35,31 @@ struct Coin {
     buy_price_usd: f64,
 }
 
+fn args_correct(args: &Vec<String>) -> bool {
+    let print_usage = || {
+        println!("Usage: ./portfolio <user_name>");
+        false
+    };
+    if args.len() != 2 {
+        return print_usage();
+    }
+    true
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
+    if !args_correct(&args) {
+        return;
+    }
     let user = args.get(1).unwrap();
     let db = db_io::Database::new("database.db");
 
-    let user_coins = get_user_coins_info(&db, user);
-    println!("{:?}", user_coins);
+    let user_coins = get_user_coins_info(&db, user).unwrap();
+    let mut coins_iter = user_coins.iter();
+
+    while let Some(coin) = coins_iter.next() {
+        println!("{}", coin);
+    }
 }
 
 fn get_user_coins_info(db: &db_io::Database, user: &str) -> Option<Vec<Coin>> {
@@ -71,6 +95,34 @@ impl Coin {
             amount_bought: u_coin.get_amount(),
             buy_price_usd: u_coin.get_buy_price_usd(),
         }
+    }
+
+    pub fn calc_perc(&self) -> String {
+        if self.price_usd > self.buy_price_usd {
+            format!(
+                "{}{:.2}%{}",
+                GREEN,
+                (1.0 - (self.buy_price_usd / self.price_usd)) * 100.0,
+                RESET
+            )
+        } else {
+            format!(
+                "{}{:.2}%{}",
+                RED,
+                (1.0 - (self.price_usd / self.buy_price_usd)) * 100.0,
+                RESET
+            )
+        }
+    }
+}
+
+impl fmt::Display for Coin {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{} ", self.name);
+        write!(f, "({}) | ", self.symbol);
+        write!(f, "{} -> ", self.buy_price_usd);
+        write!(f, "{:.2} | ", self.price_usd);
+        write!(f, "{} | ", self.calc_perc())
     }
 }
 

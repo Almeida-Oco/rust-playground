@@ -11,7 +11,7 @@ pub struct UserCoin {
     name: String,
     amount: f64,
     buy_price_usd: f64,
-    buy_price_btc: f64,
+	buy_price_btc: f64,
 }
 
 //Public methods
@@ -52,8 +52,8 @@ impl Database {
             let person_it = stmt.query_map(&[], |row| UserCoin {
                 name: row.get(0),
                 amount: row.get(1),
-                buy_price_usd: row.get(2),
-                buy_price_btc: row.get(3),
+				buy_price_btc: row.get(2),
+                buy_price_usd: row.get(3),
             }).expect(&format!("Failed to query statement: '{}'", statement));
 
             let ret: HashMap<String, UserCoin> = person_it
