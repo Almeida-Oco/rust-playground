@@ -1,5 +1,3 @@
-First major project using [Rust](https://www.rust-lang.org/en-US/index.html).
-
 Simple portfolio program to keep track of cryto investments.
 All coin informations are fetched from [CoinMarketCap](https://www.coinmarketcap.com)
 
