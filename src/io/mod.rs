@@ -51,6 +51,22 @@ impl Coin {
             buy_price_usd: u_coin.get_buy_price_usd(),
         }
     }
+
+	pub fn get_name(&self) -> &str {
+		&self.name
+	}
+
+	pub fn get_symbol(&self) -> &str {
+		&self.symbol
+	}
+
+	pub fn get_price_usd(&self) -> f64 {
+		self.price_usd
+	}
+
+	pub fn get_price_diff(&self) -> f64 {
+		100.0*(self.price_usd - self.buy_price_usd)/self.buy_price_usd
+	}
 }
 
 impl cmp::Ord for Coin {

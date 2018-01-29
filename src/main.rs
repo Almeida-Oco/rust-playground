@@ -16,7 +16,7 @@ use std::fmt;
 
 mod io;
 
-use io::{db_io, net_io};
+use io::{db_io, net_io, cli_io};
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
@@ -27,11 +27,8 @@ fn main() {
 	let db = db_io::Database::new("database.db");
 
 	let user_coins = io::get_user_coins_info(&db, user).unwrap();
-	let mut coins_iter = user_coins.iter();
-
-	while let Some(coin) = coins_iter.next() {
-		println!("{}", coin);
-	}
+	let printer = cli_io::CoinsPrinter::new(user_coins);
+	printer.print();
 }
 
 fn args_correct(args: &Vec<String>) -> bool {
