@@ -25,6 +25,7 @@ struct CoinJsonHolder {
     percent_change_24h: String,
     percent_change_7d: String,
 }
+
 #[derive(Deserialize, Debug)]
 struct NameHolder {
     id: String,
@@ -37,7 +38,7 @@ impl NameHolder {
 }
 
 #[derive(Debug)]
-pub struct Coin {
+pub struct CoinInfo {
     name: String,
     symbol: String,
     rank: u32,
@@ -49,8 +50,8 @@ pub struct Coin {
     change_7d: f32,
 }
 
-impl Coin {
-    fn from_coin_holder(holder: &CoinJsonHolder) -> Result<Coin, String> {
+impl CoinInfo {
+    fn from_coin_holder(holder: &CoinJsonHolder) -> Result<CoinInfo, String> {
         let rank = holder.rank.parse::<u32>();
         let price_usd = holder.price_usd.parse::<f32>();
         let price_btc = holder.price_btc.parse::<f32>();
@@ -74,7 +75,7 @@ impl Coin {
         } else if let Err(err) = change_7d {
             Err(format!("Error parsing 'change_7d': {:?}", err))
         } else {
-            Ok(Coin {
+            Ok(CoinInfo {
                 name: holder.name.clone(),
                 symbol: holder.symbol.clone(),
                 rank: rank.unwrap(),
@@ -87,16 +88,52 @@ impl Coin {
             })
         }
     }
+
+	pub fn get_name(&self) -> &String {
+		&self.name
+	}
+
+    pub fn get_symbol(&self) -> &String {
+        &self.symbol
+    }
+
+    pub fn get_rank(&self) -> u32 {
+        self.rank
+    }
+
+    pub fn get_price_usd(&self) -> f32 {
+        self.price_usd
+    }
+
+    pub fn get_price_btc(&self) -> f32 {
+        self.price_btc
+    }
+
+    pub fn get_market_cap(&self) -> f64 {
+        self.market_cap
+    }
+
+    pub fn get_change_1h(&self) -> f32 {
+        self.change_1h
+    }
+
+    pub fn get_change_24h(&self) -> f32 {
+        self.change_24h
+    }
+
+    pub fn get_change_7d(&self) -> f32 {
+        self.change_7d
+    }
 }
 
-pub fn get_coin_info(coin: &str) -> Result<Coin, String> {
+pub fn get_coin_info(coin: &str) -> Result<CoinInfo, String> {
     let path = String::from(PATH_START) + coin + "/";
     let response = do_request(COINMARKETCAP, HTTPS_PORT, &path);
     match response.find("\r\n\r\n[") {
         Some(index) => {
             let json_data = response.get((index + 4)..).unwrap();
             match serde_json::from_str::<Vec<CoinJsonHolder>>(json_data) {
-                Ok(result) => Coin::from_coin_holder(result.iter().next().unwrap()),
+                Ok(result) => CoinInfo::from_coin_holder(result.iter().next().unwrap()),
                 Err(error) => Err(format!("Error parsing response: {}", error)),
             }
         }
