@@ -12,7 +12,7 @@ const COINMARKETCAP: &str = "api.coinmarketcap.com";
 const HTTPS_PORT: &str = ":443";
 const PATH_START: &str = "/v1/ticker/";
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 struct CoinJsonHolder {
     id: String,
     name: String,
@@ -26,7 +26,7 @@ struct CoinJsonHolder {
     percent_change_7d: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 struct NameHolder {
     id: String,
 }
@@ -37,7 +37,6 @@ impl NameHolder {
     }
 }
 
-#[derive(Debug)]
 pub struct CoinInfo {
     name: String,
     symbol: String,
