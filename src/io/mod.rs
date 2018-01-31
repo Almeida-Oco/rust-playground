@@ -52,6 +52,21 @@ impl Coin {
         }
     }
 
+	pub fn from_str(name: &str) -> Coin {
+		Coin {
+			name: name.to_string(),
+			symbol: String::from(""),
+			rank: 0,
+			price_usd: 0.0,
+			market_cap: 0.0,
+			change_1h: 0.0,
+			change_24h: 0.0,
+			change_7d: 0.0,
+			amount_bought: 0.0,
+			buy_price_usd: 0.0,
+		}
+	}
+
 	pub fn get_name(&self) -> &str {
 		&self.name
 	}
@@ -83,7 +98,7 @@ impl cmp::PartialOrd for Coin {
 
 impl cmp::PartialEq for Coin {
     fn eq(&self, other: &Coin) -> bool {
-        self.name == other.name && self.rank == other.rank
+        self.name == other.name
     }
 }
 
