@@ -1,12 +1,11 @@
 use super::RegexToken;
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Display, Formatter, Result, Debug};
 
 use std::{time, thread};
 
 //WARNING!!! make sure this vector stays sorted
 const SYMBOLS: [char; 5] = ['$', '*', '?', '\\', '^'];
 
-#[derive(Debug)]
 pub struct RegexTxt {
     expr: String,
 }
@@ -16,11 +15,15 @@ impl RegexTxt {
 		let mut expr: String = String::with_capacity(txt.len());
 		let mut offset = 0;
 		let mut escaped = false;
+		let not_escaped = || {
+			eprintln!("Found a '\\' but no valid character to escape!");
+			return None;
+		};
 
 		for chr in txt.chars() {
-			offset += 1;
 			match SYMBOLS.binary_search(&chr) {
 				Ok(index) if SYMBOLS[index] == '\\' => {
+					println!("Escaping!");
 					escaped = true;
 				},
 				Ok(_) => {
@@ -33,18 +36,24 @@ impl RegexTxt {
 					}
 				},
 				Err(_) => {
+					println!("Escape: {}", escaped);
 					if !escaped {
 						expr.push(chr);
 					}
 					else {
-						eprintln!("Found a '\\' but no character to escaped!");
-						return None;
+						return not_escaped();
 					}
 				},
 			}
+			offset += 1;
 		}
 
-		Some((Box::new(RegexTxt{expr}), offset))
+		if escaped {
+			not_escaped()
+		}
+		else {
+			Some((Box::new(RegexTxt{expr}), offset))
+		}
     }
 }
 
@@ -75,31 +84,50 @@ impl Display for RegexTxt {
 
 impl PartialEq for RegexTxt {
     fn eq(&self, other: &RegexTxt) -> bool {
-        (self.expr == other.expr)
+        self.expr == other.expr
     }
 }
 
 #[cfg(test)]
-impl RegexTxt {
-    pub fn new2(txt: &String) -> RegexTxt {
-        RegexTxt { expr: txt.clone() }
-    }
+impl Debug for RegexTxt {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+		write!(f, "'{}'", self.expr)
+	}
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+	use super::super::RegexToken;
 
     #[test]
-    fn test_find_next() {
+    fn from_str_no_panic() {
         let txt1 = "foo*bar";
-        let txt2 = "*foo";
-        let txt3 = "foo*";
-        let txt4 = "foo?";
+        let txt2 = "foo*";
+        let txt3 = "foo\\?";
 
-        assert_eq!(find_next_symbol(txt1), Some(("*", 3)));
-        assert_eq!(find_next_symbol(txt2), Some(("*", 0)));
-        assert_eq!(find_next_symbol(txt3), Some(("*", 3)));
-        assert_eq!(find_next_symbol(txt4), Some(("?", 3)));
-    }
+		let (res1, off1) = RegexTxt::from_str(txt1).unwrap();
+		let (res2, off2) = RegexTxt::from_str(txt2).unwrap();
+		let (res3, off3) = RegexTxt::from_str(txt3).unwrap();
+
+		assert_eq!("foo", res1.get_expr());
+		assert_eq!(3, off1);
+
+		assert_eq!("foo", res2.get_expr());
+		assert_eq!(3, off2);
+
+		assert_eq!("foo?", res3.get_expr());
+		assert_eq!(5, off3);    }
+
+	#[test]
+	#[should_panic]
+	fn from_str_panic1() {
+		RegexTxt::from_str("foo\\").unwrap();
+	}
+
+	#[test]
+	#[should_panic]
+	fn from_str_panic2() {
+		RegexTxt::from_str("foo\\a").unwrap();
+	}
 }

@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Display, Formatter, Result, Debug};
 
 pub mod regex_ast;
 pub mod regex_qst;
@@ -37,4 +37,11 @@ impl RegexToken {
             _ => None,
         }
     }
+}
+
+#[cfg(test)]
+impl Debug for RegexToken {
+	fn fmt(&self, f: &mut Formatter) -> Result {
+		write!(f, "{:?}", self)
+	}
 }
