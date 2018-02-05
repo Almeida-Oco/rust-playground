@@ -1,7 +1,10 @@
 use super::RegexToken;
 use std::fmt::{Display, Formatter, Result};
 
-const SYMBOLS: [&str; 4] = ["*", "?", "^", "$"];
+use std::{time, thread};
+
+//WARNING!!! make sure this vector stays sorted
+const SYMBOLS: [char; 5] = ['$', '*', '?', '\\', '^'];
 
 #[derive(Debug)]
 pub struct RegexTxt {
@@ -10,27 +13,38 @@ pub struct RegexTxt {
 
 impl RegexTxt {
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
-        match find_next_symbol(txt) {
-            Some((_, offset)) => {
-                if let Some(text) = txt.get(..offset) {
-                    Some((
-                        Box::new(RegexTxt {
-                            expr: text.to_string(),
-                        }),
-                        offset,
-                    ))
-                } else {
-                    eprintln!("RegexToken::new({}), offset too big!", txt);
-                    None
-                }
-            }
-            None => Some((
-                Box::new(RegexTxt {
-                    expr: txt.to_string(),
-                }),
-                txt.len(),
-            )),
-        }
+		let mut expr: String = String::with_capacity(txt.len());
+		let mut offset = 0;
+		let mut escaped = false;
+
+		for chr in txt.chars() {
+			offset += 1;
+			match SYMBOLS.binary_search(&chr) {
+				Ok(index) if SYMBOLS[index] == '\\' => {
+					escaped = true;
+				},
+				Ok(_) => {
+					if escaped {
+						expr.push(chr);
+						escaped = false;
+					}
+					else {
+						break;
+					}
+				},
+				Err(_) => {
+					if !escaped {
+						expr.push(chr);
+					}
+					else {
+						eprintln!("Found a '\\' but no character to escaped!");
+						return None;
+					}
+				},
+			}
+		}
+
+		Some((Box::new(RegexTxt{expr}), offset))
     }
 }
 
@@ -62,22 +76,6 @@ impl Display for RegexTxt {
 impl PartialEq for RegexTxt {
     fn eq(&self, other: &RegexTxt) -> bool {
         (self.expr == other.expr)
-    }
-}
-
-fn find_next_symbol<'txt>(text: &'txt str) -> Option<(&'txt str, usize)> {
-    let mut ret: Option<(&str, usize)> = Some(("", usize::max_value()));
-
-    for symbol in SYMBOLS.iter() {
-        match (text.find(symbol), ret) {
-            (Some(i), Some((_, min_i))) if i < min_i => ret = Some((symbol, i)),
-            _ => (),
-        }
-    }
-
-    match ret {
-        Some((text, _)) if text != "" => ret,
-        _ => None,
     }
 }
 
