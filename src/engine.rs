@@ -10,9 +10,6 @@ pub struct Expression {
     wildcards: BTreeMap<String, Vec<Rc<Box<RegexToken>>>>,
 }
 
-use std::{thread, time};
-
-
 impl Expression {
     pub fn new() -> Expression {
         let expression: Vec<Rc<Box<RegexToken>>> = Vec::new();
@@ -51,7 +48,6 @@ impl Expression {
                 }
                 None => break,
             }
-			thread::sleep(time::Duration::from_millis(500));
         }
 
         matches == self.expression.len()

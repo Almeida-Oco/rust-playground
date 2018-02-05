@@ -1,7 +1,7 @@
 use super::RegexToken;
 use std::fmt::{Display, Formatter, Result};
 
-const SYMBOLS: [&str; 2] = ["*", "?"];
+const SYMBOLS: [&str; 4] = ["*", "?", "^", "$"];
 
 #[derive(Debug)]
 pub struct RegexTxt {

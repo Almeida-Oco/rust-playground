@@ -9,6 +9,7 @@ use regex::RegexToken;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+	println!("{:?}", args);
     if !args_valid(&args) {
         return;
     }
@@ -62,8 +63,8 @@ fn extract_slices(f_name: &str) -> Option<Expression> {
     let mut ret: Expression = Expression::new();
     let mut i: usize = 0;
 
-    while let Some(rem_txt) = f_name.get(i..) {
-        let new_token = RegexToken::from_str(rem_txt);
+    while i < f_name.len() {
+        let new_token = RegexToken::from_str(f_name, i);
         match new_token {
             Some((token, inc_i)) => {
                 if !ret.add_token(token) {
