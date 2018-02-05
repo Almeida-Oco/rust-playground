@@ -6,4 +6,6 @@ Trying to create an easier way to rename files in a system using regex.
 # Status
 
 Pattern matching to names should now be possible.
-Currently only possible wildcharacters are *
+Currently possible wild characters are '*' and '.'
+Restriction characters are '$' and '^'
+It is also possible escape characters using '\'. Example: '\*'

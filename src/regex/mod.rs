@@ -1,13 +1,13 @@
-use std::fmt::{Display, Formatter, Result, Debug};
+use std::fmt::Display;
 
 pub mod regex_ast;
-pub mod regex_qst;
+pub mod regex_dot;
 pub mod regex_txt;
 pub mod regex_dol;
 pub mod regex_pow;
 
 use regex::regex_ast::RegexAst;
-use regex::regex_qst::RegexQst;
+use regex::regex_dot::RegexDot;
 use regex::regex_txt::RegexTxt;
 use regex::regex_pow::RegexPow;
 use regex::regex_dol::RegexDol;
@@ -22,7 +22,7 @@ impl RegexToken {
     pub fn from_str(txt: &str, index: usize) -> Option<(Box<RegexToken>, usize)> {
         match (txt.chars().nth(index), txt.get(index+1..)) {
             (Some('*'), Some(rem_txt)) => RegexAst::from_str(rem_txt),
-            (Some('?'), Some(rem_txt)) => RegexQst::from_str(rem_txt),
+            (Some('.'), Some(rem_txt)) => RegexDot::from_str(rem_txt),
 			(Some('^'), Some(rem_txt)) if index == 0 => RegexPow::from_str(rem_txt),
 			(Some('^'), _) => {
 				eprintln!("Symbol '^' found not at start of string!");
@@ -37,11 +37,4 @@ impl RegexToken {
             _ => None,
         }
     }
-}
-
-#[cfg(test)]
-impl Debug for RegexToken {
-	fn fmt(&self, f: &mut Formatter) -> Result {
-		write!(f, "{:?}", self)
-	}
 }
