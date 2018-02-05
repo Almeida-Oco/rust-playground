@@ -1,13 +1,11 @@
-extern crate rn;
-
-use std::{thread, time};
 use std::env;
 use std::fs;
 use std::path;
-use rn::Expression;
+use engine::Expression;
 
 mod regex;
-use rn::regex::RegexToken;
+mod engine;
+use regex::RegexToken;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -76,7 +74,6 @@ fn extract_slices(f_name: &str) -> Option<Expression> {
             None if i >= f_name.len() => break, //end of string reached
             None => return None,                //Some error before end of string
         }
-        // thread::sleep(time::Duration::from_millis(500));
     }
 
     Some(ret)

@@ -38,7 +38,7 @@ impl RegexToken for RegexTxt {
     fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)> {
         if let Some((index, _)) = txt.match_indices(&self.expr).next() {
             if offset == -1 || index <= (offset as usize) {
-                return Some((index, 0));
+                return Some((index + self.expr.len(), 0));
             }
         }
         None
@@ -49,7 +49,7 @@ impl RegexToken for RegexTxt {
     }
 
     fn get_expr(&self) -> &str {
-        ""
+        &self.expr
     }
 }
 

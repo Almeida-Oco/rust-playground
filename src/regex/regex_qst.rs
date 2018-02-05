@@ -6,8 +6,22 @@ pub struct RegexQst {
 }
 
 impl RegexQst {
-    pub fn from_str(_txt: &str) -> Option<(Box<RegexToken>, usize)> {
-        None
+    pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
+		let err_msg = "All symbols must have an associated ID between [0,9]";
+		match txt.chars().nth(0) {
+			Some(id_chr) if id_chr.is_digit(10) => {
+				let id = id_chr.to_digit(10).unwrap();
+				Some((Box::new(RegexQst{id}), 2))
+			}
+			Some(id_chr) => {
+				eprintln!("Found non numeric char after '?': {}\n{}", id_chr, err_msg);
+				None
+			}
+			None => {
+				eprintln!("No ID associated to '?'\n{}", err_msg);
+				None
+			}
+		}
     }
 }
 

@@ -1,5 +1,3 @@
-pub mod regex;
-
 use std::result::Result;
 use std::fmt::{Display, Error, Formatter};
 use std::rc::Rc;
@@ -11,6 +9,9 @@ pub struct Expression {
     expression: Vec<Rc<Box<RegexToken>>>,
     wildcards: BTreeMap<String, Vec<Rc<Box<RegexToken>>>>,
 }
+
+use std::{thread, time};
+
 
 impl Expression {
     pub fn new() -> Expression {
@@ -38,6 +39,8 @@ impl Expression {
         let mut matches = 0;
 
         for part in self.expression.iter() {
+			println!("I =  {}, offset = {}, matches = {}, substr = {:?}, expr = {}",
+			 i, offset, matches, name.get(i..), part.get_expr());
             match name.get(i..) {
                 Some(rem_name) => {
                     if let Some((inc_i, new_offset)) = part.str_matches(rem_name, offset) {
@@ -48,6 +51,7 @@ impl Expression {
                 }
                 None => break,
             }
+			thread::sleep(time::Duration::from_millis(500));
         }
 
         matches == self.expression.len()

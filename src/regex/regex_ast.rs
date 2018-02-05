@@ -19,7 +19,7 @@ impl RegexAst {
             }
             None => {
                 eprintln!(
-                    "No ID associated to '*': End of String reached\n{}",
+                    "No ID associated to '*'\n{}",
                     err_msg
                 );
                 None
@@ -51,12 +51,5 @@ impl PartialEq for RegexAst {
 impl Display for RegexAst {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "*{}", self.id)
-    }
-}
-
-#[cfg(test)]
-impl RegexAst {
-    pub fn new2(id: u32) -> RegexAst {
-        RegexAst { id }
     }
 }
