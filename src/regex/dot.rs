@@ -43,7 +43,7 @@ impl RegexToken for RegexDot {
         self.id
     }
 
-    fn get_expr(&self) -> &str {
+	fn get_expr<'a>(&'a self) -> &'a str {
         "."
     }
 }

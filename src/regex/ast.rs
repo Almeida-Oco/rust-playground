@@ -37,7 +37,7 @@ impl RegexToken for RegexAst {
         self.id
     }
 
-    fn get_expr(&self) -> &str {
+	fn get_expr<'a>(&'a self) -> &'a str {
         "*"
     }
 }

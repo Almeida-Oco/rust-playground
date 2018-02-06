@@ -23,7 +23,7 @@ impl RegexToken for RegexPow {
         0
     }
 
-    fn get_expr(&self) -> &str {
+	fn get_expr<'a>(&'a self) -> &'a str {
         "^"
     }
 }

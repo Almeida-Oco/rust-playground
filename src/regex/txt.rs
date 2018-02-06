@@ -19,6 +19,7 @@ impl RegexTxt {
 		};
 
 		for chr in txt.chars() {
+			print!("{} ", chr);
 			match SYMBOLS.binary_search(&chr) {
 				Ok(index) if SYMBOLS[index] == '\\' => {
 					escaped = true;
@@ -67,7 +68,7 @@ impl RegexToken for RegexTxt {
         0
     }
 
-    fn get_expr(&self) -> &str {
+	fn get_expr<'a>(&'a self) -> &'a str {
         &self.expr
     }
 }

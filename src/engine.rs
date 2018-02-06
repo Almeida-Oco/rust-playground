@@ -83,7 +83,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         let mut err: Result<(), Error> = Ok(());
         self.expression.iter().any(|elem| {
-            err = write!(f, "{}", elem);
+            err = write!(f, "'{}'", elem);
             err.is_err()
         });
 

@@ -17,6 +17,7 @@ fn main() {
     let dir_f_names = get_dir_f_names(&String::from("./"));
 
     if let (Some(regex), Some(f_names)) = (regex_ops, dir_f_names) {
+		println!("REGEX = {}", regex);
         let matches = regex.match_names(&f_names);
         println!("Matches = {:?}", matches);
     }
