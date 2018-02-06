@@ -1,16 +1,16 @@
 use std::fmt::Display;
 
-pub mod regex_ast;
-pub mod regex_dot;
-pub mod regex_txt;
-pub mod regex_dol;
-pub mod regex_pow;
+pub mod ast;
+pub mod dot;
+pub mod txt;
+pub mod dol;
+pub mod pow;
 
-use regex::regex_ast::RegexAst;
-use regex::regex_dot::RegexDot;
-use regex::regex_txt::RegexTxt;
-use regex::regex_pow::RegexPow;
-use regex::regex_dol::RegexDol;
+use regex::ast::RegexAst;
+use regex::dot::RegexDot;
+use regex::txt::RegexTxt;
+use regex::pow::RegexPow;
+use regex::dol::RegexDol;
 
 pub trait RegexToken: Display {
     fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)>;

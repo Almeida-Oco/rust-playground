@@ -36,8 +36,6 @@ impl Expression {
         let mut matches = 0;
 
         for part in self.expression.iter() {
-			println!("I =  {}, offset = {}, matches = {}, substr = {:?}, expr = {}",
-			 i, offset, matches, name.get(i..), part.get_expr());
             match name.get(i..) {
                 Some(rem_name) => {
                     if let Some((inc_i, new_offset)) = part.str_matches(rem_name, offset) {

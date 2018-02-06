@@ -12,7 +12,7 @@ impl RegexPow {
 }
 
 impl RegexToken for RegexPow {
-    fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)> {
+    fn str_matches(&self, txt: &str, _offset: i32) -> Option<(usize, i32)> {
 		match txt.match_indices(&self.txt).next() {
 			Some((0, _)) => Some((0, 0)),
 			_ => None
@@ -35,7 +35,7 @@ impl Display for RegexPow {
 }
 
 impl PartialEq for RegexPow {
-    fn eq(&self, other: &RegexPow) -> bool {
+    fn eq(&self, _other: &RegexPow) -> bool {
         true
     }
 }

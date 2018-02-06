@@ -4,13 +4,13 @@ use std::fmt::{Display, Formatter, Result};
 pub struct RegexDol {}
 
 impl RegexDol {
-    pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
+    pub fn from_str(_txt: &str) -> Option<(Box<RegexToken>, usize)> {
 		Some((Box::new(RegexDol{}), 1))
     }
 }
 
 impl RegexToken for RegexDol {
-    fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)> {
+    fn str_matches(&self, txt: &str, _offset: i32) -> Option<(usize, i32)> {
 		if txt == "" {
 			Some((1, 0))
 		}
@@ -35,7 +35,7 @@ impl Display for RegexDol {
 }
 
 impl PartialEq for RegexDol {
-    fn eq(&self, other: &RegexDol) -> bool {
+    fn eq(&self, _other: &RegexDol) -> bool {
         true
     }
 }

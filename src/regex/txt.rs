@@ -1,10 +1,8 @@
 use super::RegexToken;
-use std::fmt::{Display, Formatter, Result, Debug};
-
-use std::{time, thread};
+use std::fmt::{Display, Formatter, Result};
 
 //WARNING!!! make sure this vector stays sorted
-const SYMBOLS: [char; 5] = ['$', '*', '?', '\\', '^'];
+const SYMBOLS: [char; 6] = ['$', '*', '?', '[', '\\', '^'];
 
 pub struct RegexTxt {
     expr: String,
@@ -23,7 +21,6 @@ impl RegexTxt {
 		for chr in txt.chars() {
 			match SYMBOLS.binary_search(&chr) {
 				Ok(index) if SYMBOLS[index] == '\\' => {
-					println!("Escaping!");
 					escaped = true;
 				},
 				Ok(_) => {
@@ -36,7 +33,6 @@ impl RegexTxt {
 					}
 				},
 				Err(_) => {
-					println!("Escape: {}", escaped);
 					if !escaped {
 						expr.push(chr);
 					}
@@ -98,7 +94,6 @@ impl Debug for RegexTxt {
 #[cfg(test)]
 mod test {
     use super::*;
-	use super::super::RegexToken;
 
     #[test]
     fn from_str_no_panic() {

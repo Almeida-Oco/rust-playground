@@ -9,7 +9,6 @@ use regex::RegexToken;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-	println!("{:?}", args);
     if !args_valid(&args) {
         return;
     }
