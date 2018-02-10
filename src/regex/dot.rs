@@ -43,8 +43,8 @@ impl RegexToken for RegexDot {
         self.id
     }
 
-	fn get_expr<'a>(&'a self) -> &'a str {
-        "."
+	fn get_expr(&self) -> String {
+        String::from(".")
     }
 }
 
@@ -65,7 +65,7 @@ mod test {
 	use super::*;
 
 	#[test]
-	fn from_str_no_panic() {
+	fn from_str() {
 		let txt1 = "0foo";
 		let txt2 = "10foo";
 		let txt3 = "9foo";
@@ -73,6 +73,8 @@ mod test {
 		let (res1, off1) = RegexDot::from_str(txt1).unwrap();
 		let (res2, off2) = RegexDot::from_str(txt2).unwrap();
 		let (res3, off3) = RegexDot::from_str(txt3).unwrap();
+		let res4 = RegexDot::from_str(".foo");
+		let res5 = RegexDot::from_str(".");
 
 		assert_eq!(".", res1.get_expr());
 		assert_eq!(0, res1.get_id());
@@ -85,11 +87,8 @@ mod test {
 		assert_eq!(".", res3.get_expr());
 		assert_eq!(9, res3.get_id());
 		assert_eq!(2, off3);
-	}
 
-	#[test]
-	#[should_panic]
-	fn from_str_panic() {
-		RegexDot::from_str(".foo").unwrap();
+		assert!(res4.is_none());
+		assert!(res5.is_none());
 	}
 }

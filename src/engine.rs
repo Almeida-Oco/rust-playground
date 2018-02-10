@@ -69,7 +69,7 @@ impl Expression {
     }
 
     fn unique_id(&self, token: &Box<RegexToken>) -> bool {
-        if let Some(vector) = self.wildcards.get(token.get_expr()) {
+        if let Some(vector) = self.wildcards.get(&token.get_expr()) {
             vector
                 .iter()
                 .any(|ref vec_token| token.get_id() == vec_token.get_id())

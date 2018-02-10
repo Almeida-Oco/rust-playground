@@ -17,7 +17,7 @@ use regex::set::RegexSet;
 pub trait RegexToken: Display {
     fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)>;
     fn get_id(&self) -> u32;
-    fn get_expr<'a>(&'a self) -> &'a str;
+    fn get_expr(&self) -> String;
 }
 
 impl RegexToken {

@@ -68,8 +68,8 @@ impl RegexToken for RegexTxt {
         0
     }
 
-	fn get_expr<'a>(&'a self) -> &'a str {
-        &self.expr
+	fn get_expr(&self) -> String {
+        self.expr.clone()
     }
 }
 
@@ -86,18 +86,11 @@ impl PartialEq for RegexTxt {
 }
 
 #[cfg(test)]
-impl Debug for RegexTxt {
-    fn fmt(&self, f: &mut Formatter) -> Result {
-		write!(f, "'{}'", self.expr)
-	}
-}
-
-#[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
-    fn from_str_no_panic() {
+    fn from_str() {
         let txt1 = "foo*bar";
         let txt2 = "foo*";
         let txt3 = "foo\\?";
@@ -105,6 +98,8 @@ mod test {
 		let (res1, off1) = RegexTxt::from_str(txt1).unwrap();
 		let (res2, off2) = RegexTxt::from_str(txt2).unwrap();
 		let (res3, off3) = RegexTxt::from_str(txt3).unwrap();
+		let res4 = RegexTxt::from_str("foo\\");
+		let res5 = RegexTxt::from_str("foo\\a");
 
 		assert_eq!("foo", res1.get_expr());
 		assert_eq!(3, off1);
@@ -113,17 +108,9 @@ mod test {
 		assert_eq!(3, off2);
 
 		assert_eq!("foo?", res3.get_expr());
-		assert_eq!(5, off3);    }
+		assert_eq!(5, off3);
 
-	#[test]
-	#[should_panic]
-	fn from_str_panic1() {
-		RegexTxt::from_str("foo\\").unwrap();
-	}
-
-	#[test]
-	#[should_panic]
-	fn from_str_panic2() {
-		RegexTxt::from_str("foo\\a").unwrap();
+		assert!(res4.is_none());
+		assert!(res5.is_none());
 	}
 }
