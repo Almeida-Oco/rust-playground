@@ -67,6 +67,12 @@ impl RegexToken for RegexTxt {
     fn get_expr(&self) -> String {
         self.expr.clone()
     }
+
+    fn cmp(&self, other: &RegexToken) -> bool {
+        self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
+    }
+
+    fn set_text(&mut self, _text: &str) {}
 }
 
 impl Display for RegexTxt {

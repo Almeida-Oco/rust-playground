@@ -25,6 +25,12 @@ impl RegexToken for RegexDol {
     fn get_expr(&self) -> String {
         String::from("$")
     }
+
+    fn cmp(&self, other: &RegexToken) -> bool {
+        self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
+    }
+
+    fn set_text(&mut self, _text: &str) {}
 }
 
 impl Display for RegexDol {

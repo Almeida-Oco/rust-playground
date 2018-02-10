@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexDot {
     id: u32,
+    text: String,
 }
 
 impl RegexDot {
@@ -11,7 +12,13 @@ impl RegexDot {
         match txt.chars().nth(0) {
             Some(id_chr) if id_chr.is_digit(10) => {
                 let id = id_chr.to_digit(10).unwrap();
-                Some((Box::new(RegexDot { id }), 2))
+                Some((
+                    Box::new(RegexDot {
+                        id,
+                        text: String::new(),
+                    }),
+                    2,
+                ))
             }
             Some(id_chr) => {
                 eprintln!("Found non numeric char after '.': {}\n{}", id_chr, err_msg);
@@ -45,6 +52,14 @@ impl RegexToken for RegexDot {
 
     fn get_expr(&self) -> String {
         String::from(".")
+    }
+
+    fn cmp(&self, other: &RegexToken) -> bool {
+        self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
+    }
+
+    fn set_text(&mut self, text: &str) {
+        self.text = text.to_string()
     }
 }
 

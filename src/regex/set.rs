@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexSet {
     chars: Vec<char>,
+    text: String,
 }
 
 impl RegexSet {
@@ -18,7 +19,13 @@ impl RegexSet {
             match chr {
                 ']' if !escaped => {
                     chars.sort();
-                    return Some((Box::new(RegexSet { chars }), offset));
+                    return Some((
+                        Box::new(RegexSet {
+                            chars,
+                            text: String::new(),
+                        }),
+                        offset,
+                    ));
                 }
                 '\\' if !escaped => {
                     escaped = true;
@@ -63,6 +70,14 @@ impl RegexToken for RegexSet {
         }
 
         ret
+    }
+
+    fn cmp(&self, other: &RegexToken) -> bool {
+        self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
+    }
+
+    fn set_text(&mut self, text: &str) {
+        self.text = text.to_string();
     }
 }
 

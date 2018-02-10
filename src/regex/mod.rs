@@ -16,8 +16,10 @@ use regex::set::RegexSet;
 
 pub trait RegexToken: Display {
     fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)>;
+    fn set_text(&mut self, text: &str);
     fn get_id(&self) -> u32;
     fn get_expr(&self) -> String;
+    fn cmp(&self, other: &RegexToken) -> bool;
 }
 
 impl RegexToken {
