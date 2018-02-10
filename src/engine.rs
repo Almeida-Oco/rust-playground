@@ -11,13 +11,34 @@ pub struct Expression {
 }
 
 impl Expression {
-    pub fn new() -> Expression {
+    fn new() -> Expression {
         let expression: Vec<Rc<Box<RegexToken>>> = Vec::new();
         let wildcards: BTreeMap<String, Vec<Rc<Box<RegexToken>>>> = BTreeMap::new();
         Expression {
             expression,
             wildcards,
         }
+    }
+
+    pub fn from_str(txt: &str) -> Option<Expression> {
+        let mut ret: Expression = Expression::new();
+        let mut i: usize = 0;
+
+        while i < txt.len() {
+            let new_token = RegexToken::from_str(txt, i);
+            match new_token {
+                Some((token, inc_i)) => {
+                    if !ret.add_token(token) {
+                        return None;
+                    }
+                    i += inc_i
+                }
+                None if i >= txt.len() => break, //end of string reached
+                None => return None,             //Some error before end of string
+            }
+        }
+
+        Some(ret)
     }
 
     pub fn match_names<'a>(&self, names: &'a Vec<String>) -> Vec<&'a str> {

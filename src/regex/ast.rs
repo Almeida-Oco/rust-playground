@@ -18,10 +18,7 @@ impl RegexAst {
                 None
             }
             None => {
-                eprintln!(
-                    "No ID associated to '*'\n{}",
-                    err_msg
-                );
+                eprintln!("No ID associated to '*'\n{}", err_msg);
                 None
             }
         }
@@ -37,7 +34,7 @@ impl RegexToken for RegexAst {
         self.id
     }
 
-	fn get_expr(&self) -> String {
+    fn get_expr(&self) -> String {
         String::from("*")
     }
 }
@@ -56,33 +53,33 @@ impl Display for RegexAst {
 
 #[cfg(test)]
 mod test {
-	use super::*;
+    use super::*;
 
-	#[test]
-	fn from_str() {
-		let txt1 = "0foo";
-		let txt2 = "10foo";
-		let txt3 = "9foo";
+    #[test]
+    fn from_str() {
+        let txt1 = "0foo";
+        let txt2 = "10foo";
+        let txt3 = "9foo";
 
-		let (res1, off1) = RegexAst::from_str(txt1).unwrap();
-		let (res2, off2) = RegexAst::from_str(txt2).unwrap();
-		let (res3, off3) = RegexAst::from_str(txt3).unwrap();
-		let res4 = RegexAst::from_str("*foo");
-		let res5 = RegexAst::from_str("*");
+        let (res1, off1) = RegexAst::from_str(txt1).unwrap();
+        let (res2, off2) = RegexAst::from_str(txt2).unwrap();
+        let (res3, off3) = RegexAst::from_str(txt3).unwrap();
+        let res4 = RegexAst::from_str("*foo");
+        let res5 = RegexAst::from_str("*");
 
-		assert_eq!("*", res1.get_expr());
-		assert_eq!(0, res1.get_id());
-		assert_eq!(2, off1);
+        assert_eq!("*", res1.get_expr());
+        assert_eq!(0, res1.get_id());
+        assert_eq!(2, off1);
 
-		assert_eq!("*", res2.get_expr());
-		assert_eq!(1, res2.get_id());
-		assert_eq!(2, off2);
+        assert_eq!("*", res2.get_expr());
+        assert_eq!(1, res2.get_id());
+        assert_eq!(2, off2);
 
-		assert_eq!("*", res3.get_expr());
-		assert_eq!(9, res3.get_id());
-		assert_eq!(2, off3);
+        assert_eq!("*", res3.get_expr());
+        assert_eq!(9, res3.get_id());
+        assert_eq!(2, off3);
 
-		assert!(res4.is_none());
-		assert!(res5.is_none());
-	}
+        assert!(res4.is_none());
+        assert!(res5.is_none());
+    }
 }

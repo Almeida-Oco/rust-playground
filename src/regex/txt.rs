@@ -10,47 +10,43 @@ pub struct RegexTxt {
 
 impl RegexTxt {
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
-		let mut expr: String = String::with_capacity(txt.len());
-		let mut offset = 0;
-		let mut escaped = false;
-		let not_escaped = || {
-			eprintln!("Found a '\\' but no valid character to escape!");
-			return None;
-		};
+        let mut expr: String = String::with_capacity(txt.len());
+        let mut offset = 0;
+        let mut escaped = false;
+        let not_escaped = || {
+            eprintln!("Found a '\\' but no valid character to escape!");
+            return None;
+        };
 
-		for chr in txt.chars() {
-			print!("{} ", chr);
-			match SYMBOLS.binary_search(&chr) {
-				Ok(index) if SYMBOLS[index] == '\\' => {
-					escaped = true;
-				},
-				Ok(_) => {
-					if escaped {
-						expr.push(chr);
-						escaped = false;
-					}
-					else {
-						break;
-					}
-				},
-				Err(_) => {
-					if !escaped {
-						expr.push(chr);
-					}
-					else {
-						return not_escaped();
-					}
-				},
-			}
-			offset += 1;
-		}
+        for chr in txt.chars() {
+            match SYMBOLS.binary_search(&chr) {
+                Ok(index) if SYMBOLS[index] == '\\' => {
+                    escaped = true;
+                }
+                Ok(_) => {
+                    if escaped {
+                        expr.push(chr);
+                        escaped = false;
+                    } else {
+                        break;
+                    }
+                }
+                Err(_) => {
+                    if !escaped {
+                        expr.push(chr);
+                    } else {
+                        return not_escaped();
+                    }
+                }
+            }
+            offset += 1;
+        }
 
-		if escaped {
-			not_escaped()
-		}
-		else {
-			Some((Box::new(RegexTxt{expr}), offset))
-		}
+        if escaped {
+            not_escaped()
+        } else {
+            Some((Box::new(RegexTxt { expr }), offset))
+        }
     }
 }
 
@@ -68,7 +64,7 @@ impl RegexToken for RegexTxt {
         0
     }
 
-	fn get_expr(&self) -> String {
+    fn get_expr(&self) -> String {
         self.expr.clone()
     }
 }
@@ -95,22 +91,22 @@ mod test {
         let txt2 = "foo*";
         let txt3 = "foo\\?";
 
-		let (res1, off1) = RegexTxt::from_str(txt1).unwrap();
-		let (res2, off2) = RegexTxt::from_str(txt2).unwrap();
-		let (res3, off3) = RegexTxt::from_str(txt3).unwrap();
-		let res4 = RegexTxt::from_str("foo\\");
-		let res5 = RegexTxt::from_str("foo\\a");
+        let (res1, off1) = RegexTxt::from_str(txt1).unwrap();
+        let (res2, off2) = RegexTxt::from_str(txt2).unwrap();
+        let (res3, off3) = RegexTxt::from_str(txt3).unwrap();
+        let res4 = RegexTxt::from_str("foo\\");
+        let res5 = RegexTxt::from_str("foo\\a");
 
-		assert_eq!("foo", res1.get_expr());
-		assert_eq!(3, off1);
+        assert_eq!("foo", res1.get_expr());
+        assert_eq!(3, off1);
 
-		assert_eq!("foo", res2.get_expr());
-		assert_eq!(3, off2);
+        assert_eq!("foo", res2.get_expr());
+        assert_eq!(3, off2);
 
-		assert_eq!("foo?", res3.get_expr());
-		assert_eq!(5, off3);
+        assert_eq!("foo?", res3.get_expr());
+        assert_eq!(5, off3);
 
-		assert!(res4.is_none());
-		assert!(res5.is_none());
-	}
+        assert!(res4.is_none());
+        assert!(res5.is_none());
+    }
 }

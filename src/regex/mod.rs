@@ -22,21 +22,20 @@ pub trait RegexToken: Display {
 
 impl RegexToken {
     pub fn from_str(txt: &str, index: usize) -> Option<(Box<RegexToken>, usize)> {
-		println!("TOKEN::from_str({}, {})", txt, index);
-		match (txt.chars().nth(index), txt.get(index+1..)) {
+        match (txt.chars().nth(index), txt.get(index + 1..)) {
             (Some('*'), Some(rem_txt)) => RegexAst::from_str(rem_txt),
             (Some('.'), Some(rem_txt)) => RegexDot::from_str(rem_txt),
-			(Some('['), Some(rem_txt)) => RegexSet::from_str(rem_txt),
-			(Some('^'), Some(rem_txt)) if index == 0 => RegexPow::from_str(rem_txt),
-			(Some('^'), _) => {
-				eprintln!("Symbol '^' found not at start of string!");
-				None
-			},
-			(Some('$'), Some("")) => RegexDol::from_str(""),
-			(Some('$'), _) => {
-				eprintln!("Symbol '$' found not at end of string!");
-				None
-			}
+            (Some('['), Some(rem_txt)) => RegexSet::from_str(rem_txt),
+            (Some('^'), Some(rem_txt)) if index == 0 => RegexPow::from_str(rem_txt),
+            (Some('^'), _) => {
+                eprintln!("Symbol '^' found not at start of string!");
+                None
+            }
+            (Some('$'), Some("")) => RegexDol::from_str(""),
+            (Some('$'), _) => {
+                eprintln!("Symbol '$' found not at end of string!");
+                None
+            }
             (Some(chr), Some(rem_txt)) => RegexTxt::from_str(&format!("{}{}", chr, rem_txt)),
             _ => None,
         }
