@@ -73,6 +73,9 @@ impl Expression {
 			}
 			self.try_set_symbol_text(part_i, prev);
 		}
+		if name_i < name.len() {
+			self.try_set_symbol_text(size, name.get(name_i..).expect("Expression::match_name(), name_i out of bounds?!").to_string());
+		}
 
 		println!("NAME: '{}'", name);
 		for part in self.expression.iter() {
