@@ -10,3 +10,4 @@ Trying to create an easier way to rename files in a system using regex.
 * Restriction characters are '$' and '^'
 * It is also possible escape characters using '\\'. Example: '\\*'
 * Character sets '[<set>]' are available, though escaping characters inside them might not fully work
+* Regex symbols are now assigned the respective matching text, to easily rename the files.
