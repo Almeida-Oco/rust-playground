@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::path;
+use std::thread;
 use engine::Expression;
 
 mod regex;
@@ -12,12 +13,19 @@ fn main() {
         return;
     }
 
-    let regex_ops = Expression::from_str(&args[1]);
-    let dir_f_names = get_dir_f_names(&String::from("./"));
+    let thread1 = thread::spawn(|| get_dir_f_names(&String::from("./")));
 
-    if let (Some(regex), Some(f_names)) = (regex_ops, dir_f_names) {
+    let regex_ops = Expression::from_str(&args[1]);
+    let dir_f_names = thread1.join().unwrap();
+
+    if let (Some(mut regex), Some(f_names)) = (regex_ops, dir_f_names) {
         let matches = regex.match_names(&f_names);
-        println!("Matches = {:?}", matches);
+        let thread3 = thread::spawn(move || Expression::from_str(&args[2]));
+
+        if let Some(new_regex) = thread3.join().unwrap() {
+            println!("Matches = {:?}", matches);
+            println!("New Regex = {}", new_regex);
+        }
     }
 }
 

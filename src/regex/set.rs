@@ -1,8 +1,10 @@
-use super::RegexToken;
+use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
+
 
 pub struct RegexSet {
     chars: Vec<char>,
+	expr: String,
     text: String,
 }
 
@@ -18,10 +20,12 @@ impl RegexSet {
             offset += 1;
             match chr {
                 ']' if !escaped => {
+					let expr = RegexSet::extract_expr(&chars);
                     chars.sort();
                     return Some((
                         Box::new(RegexSet {
                             chars,
+							expr,
                             text: String::new(),
                         }),
                         offset,
@@ -44,6 +48,15 @@ impl RegexSet {
 
         None
     }
+
+	fn extract_expr(chrs: &Vec<char>) -> String {
+		let mut string: String = String::with_capacity(chrs.len());
+		for chr in chrs.iter() {
+			string.push(*chr)
+		}
+
+		string
+	}
 }
 
 impl RegexToken for RegexSet {
@@ -59,25 +72,38 @@ impl RegexToken for RegexSet {
         }
     }
 
+	fn extract_text(&mut self, txt: &str, _offset: i32) -> Option<TextExtract> {
+		match txt.chars().nth(0) {
+			Some(chr) if self.chars.binary_search(&chr).is_ok() => {
+				self.text = chr.to_string();
+				Some(TextExtract {
+					previous: String::new(),
+					inc_i: 1,
+					offset: 0,
+				})
+			},
+			_ => None,
+		}
+	}
+
     fn get_id(&self) -> u32 {
         0
     }
 
-    fn get_expr(&self) -> String {
-        let mut ret = String::with_capacity(self.chars.len());
-        for chr in self.chars.iter() {
-            ret.push(*chr);
-        }
-
-        ret
+    fn get_expr(&self) -> &str {
+		&self.expr
     }
+
+	fn get_text(&self) -> &str {
+		&self.text
+	}
 
     fn cmp(&self, other: &RegexToken) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
     }
 
-    fn set_text(&mut self, text: &str) {
-        self.text = text.to_string();
+    fn set_text(&mut self, text: String) {
+        self.text = text;
     }
 }
 

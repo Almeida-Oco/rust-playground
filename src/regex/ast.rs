@@ -1,4 +1,4 @@
-use super::RegexToken;
+use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexAst {
@@ -37,20 +37,32 @@ impl RegexToken for RegexAst {
         Some((0, -1))
     }
 
+	fn extract_text(&mut self, _txt: &str, _offset: i32) -> Option<TextExtract> {
+		Some(TextExtract {
+			previous: String::new(),
+			inc_i: 0,
+			offset: -1,
+		})
+	}
+
     fn get_id(&self) -> u32 {
         self.id
     }
 
-    fn get_expr(&self) -> String {
-        String::from("*")
+    fn get_expr(&self) -> &str {
+        "*"
     }
+
+	fn get_text(&self) -> &str {
+		&self.text
+	}
 
     fn cmp(&self, other: &RegexToken) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
     }
 
-    fn set_text(&mut self, text: &str) {
-        self.text = text.to_string()
+    fn set_text(&mut self, text: String) {
+        self.text = text
     }
 }
 

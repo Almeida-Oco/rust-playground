@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::marker::Send;
 
 pub mod ast;
 pub mod dot;
@@ -14,11 +15,13 @@ use regex::pow::RegexPow;
 use regex::dol::RegexDol;
 use regex::set::RegexSet;
 
-pub trait RegexToken: Display {
+pub trait RegexToken: Display + Send + Sync{
     fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)>;
-    fn set_text(&mut self, text: &str);
+	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract>;
+    fn set_text(&mut self, text: String);
     fn get_id(&self) -> u32;
-    fn get_expr(&self) -> String;
+    fn get_expr(&self) -> &str;
+	fn get_text(&self) -> &str;
     fn cmp(&self, other: &RegexToken) -> bool;
 }
 
@@ -42,4 +45,24 @@ impl RegexToken {
             _ => None,
         }
     }
+}
+
+pub struct TextExtract {
+	previous: String,
+	inc_i: usize,
+	offset: i32,
+}
+
+impl TextExtract {
+	pub fn get_previous(self) -> String {
+		self.previous
+	}
+
+	pub fn get_inc_i(&self) -> usize {
+		self.inc_i
+	}
+
+	pub fn get_offset(&self) -> i32 {
+		self.offset
+	}
 }

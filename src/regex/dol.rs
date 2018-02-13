@@ -1,4 +1,4 @@
-use super::RegexToken;
+use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexDol {}
@@ -18,19 +18,36 @@ impl RegexToken for RegexDol {
         }
     }
 
+	fn extract_text(&mut self, txt: &str, _offset: i32) -> Option<TextExtract> {
+		if txt == "" {
+			Some(TextExtract {
+				previous: String::new(),
+				inc_i: 1,
+				offset: 0,
+			})
+		}
+		else {
+			None
+		}
+	}
+
     fn get_id(&self) -> u32 {
         0
     }
 
-    fn get_expr(&self) -> String {
-        String::from("$")
+    fn get_expr(&self) -> &str {
+        "$"
     }
+
+	fn get_text(&self) -> &str {
+		""
+	}
 
     fn cmp(&self, other: &RegexToken) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
     }
 
-    fn set_text(&mut self, _text: &str) {}
+    fn set_text(&mut self, _text: String) {}
 }
 
 impl Display for RegexDol {

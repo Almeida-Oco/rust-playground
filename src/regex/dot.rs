@@ -1,4 +1,4 @@
-use super::RegexToken;
+use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexDot {
@@ -46,20 +46,39 @@ impl RegexToken for RegexDot {
         }
     }
 
+	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
+		match txt.chars().nth(0) {
+			Some(chr) if offset >= 0 => {
+				self.text = chr.to_string();
+				Some(TextExtract {
+					previous: String::new(),
+					inc_i: 0,
+					offset: 1,
+				})
+			},
+			Some(_) => panic!("RegexDot::extract_text({}, {}), wrong offset", txt, offset),
+			None => panic!("RegexDot::extract_text({}, {}), null txt!", txt, offset),
+		}
+	}
+
     fn get_id(&self) -> u32 {
         self.id
     }
 
-    fn get_expr(&self) -> String {
-        String::from(".")
+    fn get_expr(&self) -> &str {
+        "."
     }
+
+	fn get_text(&self) -> &str {
+		&self.text
+	}
 
     fn cmp(&self, other: &RegexToken) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
     }
 
-    fn set_text(&mut self, text: &str) {
-        self.text = text.to_string()
+    fn set_text(&mut self, text: String) {
+        self.text = text
     }
 }
 

@@ -1,4 +1,4 @@
-use super::RegexToken;
+use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
 //WARNING!!! make sure this vector stays sorted
@@ -60,19 +60,36 @@ impl RegexToken for RegexTxt {
         None
     }
 
+	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
+		match txt.match_indices(&self.expr).nth(0) {
+			Some((index, _)) if offset == -1 || index <= (offset as usize) => {
+				txt.get(0..index).map(|previous| TextExtract {
+					previous: previous.to_string(),
+					inc_i: index + self.expr.len(),
+					offset: 0,
+				})
+			},
+			_ => None,
+		}
+	}
+
     fn get_id(&self) -> u32 {
         0
     }
 
-    fn get_expr(&self) -> String {
-        self.expr.clone()
+    fn get_expr(&self) -> &str {
+        &self.expr
     }
+
+	fn get_text(&self) -> &str {
+		&self.expr
+	}
 
     fn cmp(&self, other: &RegexToken) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
     }
 
-    fn set_text(&mut self, _text: &str) {}
+    fn set_text(&mut self, _text: String) {}
 }
 
 impl Display for RegexTxt {

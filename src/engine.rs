@@ -1,19 +1,18 @@
 use std::result::Result;
 use std::fmt::{Display, Error, Formatter};
-use std::rc::Rc;
 use std::collections::BTreeMap;
 
 use regex::RegexToken;
 
 pub struct Expression {
-    expression: Vec<Rc<Box<RegexToken>>>,
-    wildcards: BTreeMap<String, Vec<Rc<Box<RegexToken>>>>,
+    expression: Vec<Box<RegexToken>>,
+	wildcards: BTreeMap<String, Vec<usize>>,
 }
 
 impl Expression {
     fn new() -> Expression {
-        let expression: Vec<Rc<Box<RegexToken>>> = Vec::new();
-        let wildcards: BTreeMap<String, Vec<Rc<Box<RegexToken>>>> = BTreeMap::new();
+        let expression: Vec<Box<RegexToken>> = Vec::new();
+        let wildcards: BTreeMap<String, Vec<usize>> = BTreeMap::new();
         Expression {
             expression,
             wildcards,
@@ -25,8 +24,7 @@ impl Expression {
         let mut i: usize = 0;
 
         while i < txt.len() {
-            let new_token = RegexToken::from_str(txt, i);
-            match new_token {
+            match RegexToken::from_str(txt, i) {
                 Some((token, inc_i)) => {
                     if !ret.add_token(token) {
                         return None;
@@ -34,14 +32,14 @@ impl Expression {
                     i += inc_i
                 }
                 None if i >= txt.len() => break, //end of string reached
-                None => return None,             //Some error before end of string
+                _ => return None,             //Some error before end of string
             }
         }
 
         Some(ret)
     }
 
-    pub fn match_names<'a>(&self, names: &'a Vec<String>) -> Vec<&'a str> {
+    pub fn match_names<'a>(&mut self, names: &'a Vec<String>) -> Vec<&'a str> {
         let mut ret: Vec<&str> = Vec::new();
         for name in names.iter() {
             if self.match_name(name) {
@@ -51,49 +49,72 @@ impl Expression {
         ret
     }
 
-    fn match_name(&self, name: &String) -> bool {
-        let mut i: usize = 0;
-        let mut offset: i32 = -1;
-        let mut matches = 0;
+    fn match_name(&mut self, name: &String) -> bool {
+        let mut name_i: usize = 0;
+		let mut offset: i32 = -1;
+		let mut prev: String;
+		let size = self.expression.len();
 
-        for part in self.expression.iter() {
-            match name.get(i..) {
-                Some(rem_name) => {
-                    if let Some((inc_i, new_offset)) = part.str_matches(rem_name, offset) {
-                        offset = new_offset;
-                        i += inc_i;
-                        matches += 1;
-                    }
-                }
-                None => break,
-            }
-        }
+		for part_i in 0..size {
+			match (self.expression.get_mut(part_i), name.get(name_i..)) {
+				(Some(part), Some(rem_name)) => {
+					if let Some(extract) = part.extract_text(rem_name, offset) {
+						offset = extract.get_offset();
+						name_i += extract.get_inc_i();
+						prev = extract.get_previous();
+					}
+					else {
+						return false;
+					}
+				},
+				(Some(_), None) => return false, // TODO check remaining symbols
+				(None, Some(_)) => return false,
+				(None, None) => return true,
+			}
+			self.try_set_symbol_text(part_i, prev);
+		}
 
-        matches == self.expression.len()
+		println!("NAME: '{}'", name);
+		for part in self.expression.iter() {
+			println!("	'{}' -> {}", part.get_expr(), part.get_text());
+		}
+		println!("END");
+
+
+		true
     }
 
-    pub fn add_token(&mut self, token: Box<RegexToken>) -> bool {
-        let key = token.to_string();
-        let is_txt = token.get_expr() == "";
-        let unique = !is_txt && self.unique_id(&token);
+	fn try_set_symbol_text(&mut self, curr_index: usize, txt: String) {
+		if txt != "" && curr_index > 0 {
+			match self.expression.get_mut(curr_index-1) {
+				Some(part) => part.set_text(txt),
+				None => panic!("Expression::set_symbol_text({}, {}), wrong index!", curr_index, txt),
+			}
+		}
+	}
 
-        let value = Rc::new(token);
+    pub fn add_token(&mut self, value: Box<RegexToken>) -> bool {
+        let key = value.to_string();
+		let is_txt = value.get_expr() == "";
+        let unique = !is_txt && self.unique_id(&value);
+
         if unique {
             self.wildcards
                 .entry(key.to_string())
                 .or_insert(Vec::new())
-                .push(Rc::clone(&value));
+                .push(self.expression.len());
         }
+
         self.expression.push(value);
 
         (unique || is_txt)
     }
 
     fn unique_id(&self, token: &Box<RegexToken>) -> bool {
-        if let Some(vector) = self.wildcards.get(&token.get_expr()) {
+        if let Some(vector) = self.wildcards.get(token.get_expr()) {
             vector
                 .iter()
-                .any(|ref vec_token| token.get_id() == vec_token.get_id())
+                .any(|vec_token| token.get_id() == self.expression.get(*vec_token).expect("Wrong index in wildcards!").get_id())
         } else {
             true
         }
