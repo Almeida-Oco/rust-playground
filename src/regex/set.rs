@@ -50,11 +50,12 @@ impl RegexSet {
     }
 
 	fn extract_expr(chrs: &Vec<char>) -> String {
-		let mut string: String = String::with_capacity(chrs.len());
+		let mut string: String = String::with_capacity(chrs.len()+2);
+		string += "[";
 		for chr in chrs.iter() {
 			string.push(*chr)
 		}
-
+		string += "]";
 		string
 	}
 }
@@ -98,12 +99,10 @@ impl RegexToken for RegexSet {
 		&self.text
 	}
 
+	fn set_text(&mut self, text: String) {}
+
     fn cmp(&self, other: &RegexToken) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
-    }
-
-    fn set_text(&mut self, text: String) {
-        self.text = text;
     }
 }
 

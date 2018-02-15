@@ -67,9 +67,8 @@ impl Expression {
 						return false;
 					}
 				},
-				(Some(_), None) => return false, // TODO check remaining symbols
-				(None, Some(_)) => return false,
 				(None, None) => return true,
+				_ => return false,
 			}
 			self.try_set_symbol_text(part_i, prev);
 		}
@@ -82,7 +81,6 @@ impl Expression {
 			println!("	'{}' -> {}", part.get_expr(), part.get_text());
 		}
 		println!("END");
-
 
 		true
     }
