@@ -2,7 +2,7 @@ use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
 //WARNING!!! make sure this vector stays sorted
-const SYMBOLS: [char; 6] = ['$', '*', '?', '[', '\\', '^'];
+const SYMBOLS: [char; 6] = ['$', '*', '.', '[', '\\', '^'];
 
 pub struct RegexTxt {
     expr: String,

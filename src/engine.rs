@@ -142,6 +142,9 @@ impl Expression {
                 .or_insert(Vec::new())
                 .push(self.expression.len());
         }
+		else {
+			eprintln!("Duplicate '{}' ID's found! (conflict on ID {})", key, value.get_id());
+		}
 
         self.expression.push(value);
 
@@ -150,7 +153,7 @@ impl Expression {
 
     fn unique_id(&self, token: &Box<RegexToken>) -> bool {
         if let Some(vector) = self.wildcards.get(token.get_expr()) {
-            vector
+            !vector
                 .iter()
                 .any(|vec_token| token.get_id() == self.expression.get(*vec_token).expect("Wrong index in wildcards!").get_id())
         } else {

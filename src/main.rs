@@ -21,27 +21,24 @@ fn main() {
 
     if let (Some(mut match_regex), Some(target_regex), Some(f_names)) = (regex1, regex2, dir_f_names) {
         let new_names = match_regex.match_new_names(&f_names, &target_regex);
-
         if let Some(names) = new_names {
+			println!("DIFFERENT? {}", target_names_different(&names));
 			println!("{:?}", names);
 		}
 		else {
 			println!("RETURNED NONE");
 		}
     }
+
 }
 
 fn args_valid(args: &Vec<String>) -> bool {
     let print_usage = || {
-        println!("Usage: rn <file name> <new file name>");
-        false
-    };
-    let target_wrong = || {
-        println!("Target name must be different for each file (consider using '*')");
+        eprintln!("Usage: rn <file name> <new file name>");
         false
     };
     let suggest_enclose = || {
-        println!("Too many arguments found, maybe you forgot to enclose the <file_name>.\n	'<file_name>'");
+        eprintln!("Too many arguments found, maybe you forgot to enclose the <file_name> with '<file_name>'");
         false
     };
 
@@ -51,20 +48,8 @@ fn args_valid(args: &Vec<String>) -> bool {
         }
         return print_usage();
     }
-    if !valid_target_name(&args[2]) {
-        return target_wrong();
-    }
 
     true
-}
-
-fn valid_target_name(name: &String) -> bool {
-    if name.contains("*") {
-        return true;
-    }
-    //TODO add remaining special chars
-
-    false
 }
 
 fn get_dir_f_names<'a>(path: &'a str) -> Option<Vec<String>> {
@@ -78,4 +63,19 @@ fn get_dir_f_names<'a>(path: &'a str) -> Option<Vec<String>> {
         eprintln!("Error opening dir '{}'!", path);
         None
     }
+}
+
+fn target_names_different(names: &Vec<(&str, String)>) -> bool {
+	let mut diff_names: Vec<&str> = Vec::with_capacity(names.len());
+	let mut iter = names.iter();
+	while let Some(&(_, ref name)) = iter.next() {
+		if !diff_names.contains(&name.as_str()) {
+			diff_names.push(name.as_str());
+		}
+		else {
+			return false;
+		}
+	}
+
+	true
 }
