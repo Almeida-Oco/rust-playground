@@ -85,7 +85,7 @@ impl RegexToken for RegexTxt {
 		&self.expr
 	}
 
-    fn cmp(&self, other: &RegexToken) -> bool {
+    fn cmp(&self, other: &Box<RegexToken>) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
     }
 

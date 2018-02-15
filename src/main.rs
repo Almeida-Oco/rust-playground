@@ -15,17 +15,19 @@ fn main() {
 
     let thread1 = thread::spawn(|| get_dir_f_names(&String::from("./")));
 
-    let regex_ops = Expression::from_str(&args[1]);
+    let regex1 = Expression::from_str(&args[1]);
     let dir_f_names = thread1.join().unwrap();
+	let regex2 = Expression::from_str(&args[2]);
 
-    if let (Some(mut regex), Some(f_names)) = (regex_ops, dir_f_names) {
-        let matches = regex.match_names(&f_names);
-        let thread3 = thread::spawn(move || Expression::from_str(&args[2]));
+    if let (Some(mut match_regex), Some(target_regex), Some(f_names)) = (regex1, regex2, dir_f_names) {
+        let new_names = match_regex.match_new_names(&f_names, &target_regex);
 
-        if let Some(new_regex) = thread3.join().unwrap() {
-            println!("Matches = {:?}", matches);
-            println!("New Regex = {}", new_regex);
-        }
+        if let Some(names) = new_names {
+			println!("{:?}", names);
+		}
+		else {
+			println!("RETURNED NONE");
+		}
     }
 }
 

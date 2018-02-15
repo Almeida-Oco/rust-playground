@@ -48,7 +48,7 @@ impl RegexToken for RegexPow {
 		""
 	}
 
-    fn cmp(&self, other: &RegexToken) -> bool {
+    fn cmp(&self, other: &Box<RegexToken>) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
     }
 

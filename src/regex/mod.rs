@@ -22,7 +22,7 @@ pub trait RegexToken: Display + Send + Sync{
     fn get_id(&self) -> u32;
     fn get_expr(&self) -> &str;
 	fn get_text(&self) -> &str;
-    fn cmp(&self, other: &RegexToken) -> bool;
+    fn cmp(&self, other: &Box<RegexToken>) -> bool;
 }
 
 impl RegexToken {

@@ -39,15 +39,20 @@ impl Expression {
         Some(ret)
     }
 
-    pub fn match_names<'a>(&mut self, names: &'a Vec<String>) -> Vec<&'a str> {
-        let mut ret: Vec<&str> = Vec::new();
-        for name in names.iter() {
-            if self.match_name(name) {
-                ret.push(name);
-            }
-        }
-        ret
-    }
+	pub fn match_new_names<'a>(&mut self, names: &'a Vec<String>, target: &Expression) -> Option<Vec<(&'a str, String)>> {
+		let mut ret: Vec<(&str, String)> = Vec::new();
+		for name in names.iter() {
+			if self.match_name(name) {
+				match self.gen_name(target) { //TODO should I reset symbols text?
+					Some(new_name) => ret.push((&name, new_name)),
+					None => return None,
+				}
+			}
+			self.reset_expression_text();
+		}
+
+		Some(ret)
+	}
 
     fn match_name(&mut self, name: &String) -> bool {
         let mut name_i: usize = 0;
@@ -76,12 +81,6 @@ impl Expression {
 			self.try_set_symbol_text(size, name.get(name_i..).expect("Expression::match_name(), name_i out of bounds?!").to_string());
 		}
 
-		println!("NAME: '{}'", name);
-		for part in self.expression.iter() {
-			println!("	'{}' -> {}", part.get_expr(), part.get_text());
-		}
-		println!("END");
-
 		true
     }
 
@@ -94,14 +93,52 @@ impl Expression {
 		}
 	}
 
+	//returns none when the target has symbols which are not present in the matching regex
+	fn gen_name(&self, target: &Expression) -> Option<String> {
+		let mut ret = String::new();
+		for symbol in target.expression.iter() {
+			let symb_text = symbol.get_text();
+			match self.get_wildcard(symbol) {
+				Some(token) => ret += token.get_text(),
+				None if symb_text != ""  => ret += symb_text,
+				None => {
+					eprintln!("Target regex has symbols which do not exist in the matching regex! Aborting...");
+					return None;
+				}
+			}
+
+		}
+
+		Some(ret)
+	}
+
+	fn reset_expression_text(&mut self) {
+		for symbol in self.expression.iter_mut() {
+			symbol.set_text(String::new());
+		}
+	}
+
+	fn get_wildcard(&self, token: &Box<RegexToken>) -> Option<&Box<RegexToken>> {
+		if let Some(vec) = self.wildcards.get(token.get_expr()) {
+
+			for elem in vec.iter() {
+				let symbol = self.expression.get(*elem).expect("Expression::get_wildcard() wrong index!");
+				if token.cmp(symbol) {
+					return Some(symbol);
+				}
+			}
+		}
+		None
+	}
+
     pub fn add_token(&mut self, value: Box<RegexToken>) -> bool {
-        let key = value.to_string();
+        let key = value.get_expr().to_string();
 		let is_txt = value.get_expr() == "";
         let unique = !is_txt && self.unique_id(&value);
 
         if unique {
             self.wildcards
-                .entry(key.to_string())
+                .entry(key)
                 .or_insert(Vec::new())
                 .push(self.expression.len());
         }
