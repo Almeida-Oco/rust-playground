@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::error::Error;
 use std::path;
 use std::thread;
 use engine::Expression;
@@ -20,13 +21,13 @@ fn main() {
 	let regex2 = Expression::from_str(&args[2]);
 
     if let (Some(mut match_regex), Some(target_regex), Some(f_names)) = (regex1, regex2, dir_f_names) {
-        let new_names = match_regex.match_new_names(&f_names, &target_regex);
-        if let Some(names) = new_names {
-			println!("DIFFERENT? {}", target_names_different(&names));
-			println!("{:?}", names);
-		}
-		else {
-			println!("RETURNED NONE");
+		match match_regex.match_new_names(&f_names, &target_regex) {
+			Some(ref names) if target_names_different(&names) => {
+				rename_files(names);
+				println!("Rename successfull!");
+			},
+			Some(_) => eprintln!("Duplicate names found for the given target regex!\n  Please change the regex so that there are no collisions!"),
+			_ => (),
 		}
     }
 
@@ -78,4 +79,12 @@ fn target_names_different(names: &Vec<(&str, String)>) -> bool {
 	}
 
 	true
+}
+
+fn rename_files(names: &Vec<(&str, String)>) {
+	for &(curr_name, ref new_name) in names {
+		if let Err(err) = fs::rename(curr_name, new_name) {
+			eprintln!("{}", err.description());
+		}
+	}
 }

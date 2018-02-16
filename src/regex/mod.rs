@@ -16,13 +16,15 @@ use regex::dol::RegexDol;
 use regex::set::RegexSet;
 
 pub trait RegexToken: Display + Send + Sync{
-    fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)>;
 	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract>;
+
     fn set_text(&mut self, text: String);
     fn get_id(&self) -> u32;
     fn get_expr(&self) -> &str;
 	fn get_text(&self) -> &str;
-    fn cmp(&self, other: &Box<RegexToken>) -> bool;
+	fn matches_none(&self) -> bool;
+
+	fn cmp(&self, other: &Box<RegexToken>) -> bool;
 }
 
 impl RegexToken {

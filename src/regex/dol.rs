@@ -10,14 +10,6 @@ impl RegexDol {
 }
 
 impl RegexToken for RegexDol {
-    fn str_matches(&self, txt: &str, _offset: i32) -> Option<(usize, i32)> {
-        if txt == "" {
-            Some((1, 0))
-        } else {
-            None
-        }
-    }
-
 	fn extract_text(&mut self, txt: &str, _offset: i32) -> Option<TextExtract> {
 		if txt == "" {
 			Some(TextExtract {
@@ -41,6 +33,10 @@ impl RegexToken for RegexDol {
 
 	fn get_text(&self) -> &str {
 		""
+	}
+
+	fn matches_none(&self) -> bool {
+		false
 	}
 
     fn cmp(&self, other: &Box<RegexToken>) -> bool {

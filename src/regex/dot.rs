@@ -33,19 +33,6 @@ impl RegexDot {
 }
 
 impl RegexToken for RegexDot {
-    fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)> {
-        if offset >= 0 {
-            Some((0, 1))
-        } else if offset == -1 {
-            Some((0, -1)) //'*' overrides '.'
-        } else {
-            panic!(
-                "RegexDot::str_matches({}, {}), wrong offset value!",
-                txt, offset
-            );
-        }
-    }
-
 	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
 		match txt.chars().nth(0) {
 			Some(chr) if offset >= 0 => {
@@ -57,7 +44,7 @@ impl RegexToken for RegexDot {
 				})
 			},
 			Some(_) => panic!("RegexDot::extract_text({}, {}), wrong offset", txt, offset),
-			None => panic!("RegexDot::extract_text({}, {}), null txt!", txt, offset),
+			None => None,
 		}
 	}
 
@@ -71,6 +58,10 @@ impl RegexToken for RegexDot {
 
 	fn get_text(&self) -> &str {
 		&self.text
+	}
+
+	fn matches_none(&self) -> bool {
+		true
 	}
 
     fn cmp(&self, other: &Box<RegexToken>) -> bool {

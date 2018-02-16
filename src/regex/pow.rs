@@ -18,13 +18,6 @@ impl RegexPow {
 }
 
 impl RegexToken for RegexPow {
-    fn str_matches(&self, txt: &str, _offset: i32) -> Option<(usize, i32)> {
-        match txt.match_indices(&self.txt).next() {
-            Some((0, _)) => Some((0, 0)),
-            _ => None,
-        }
-    }
-
 	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
 		match txt.match_indices(&self.txt).nth(0) {
 			Some((0, _)) if offset == -1 => Some(TextExtract {
@@ -46,6 +39,10 @@ impl RegexToken for RegexPow {
 
 	fn get_text(&self) -> &str {
 		""
+	}
+
+	fn matches_none(&self) -> bool {
+		false
 	}
 
     fn cmp(&self, other: &Box<RegexToken>) -> bool {

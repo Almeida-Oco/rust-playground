@@ -5,39 +5,39 @@ use std::collections::BTreeMap;
 use regex::RegexToken;
 
 pub struct Expression {
-    expression: Vec<Box<RegexToken>>,
+	expression: Vec<Box<RegexToken>>,
 	wildcards: BTreeMap<String, Vec<usize>>,
 }
 
 impl Expression {
-    fn new() -> Expression {
-        let expression: Vec<Box<RegexToken>> = Vec::new();
-        let wildcards: BTreeMap<String, Vec<usize>> = BTreeMap::new();
-        Expression {
-            expression,
-            wildcards,
-        }
-    }
+	fn new() -> Expression {
+		let expression: Vec<Box<RegexToken>> = Vec::new();
+		let wildcards: BTreeMap<String, Vec<usize>> = BTreeMap::new();
+		Expression {
+			expression,
+			wildcards,
+		}
+	}
 
-    pub fn from_str(txt: &str) -> Option<Expression> {
-        let mut ret: Expression = Expression::new();
-        let mut i: usize = 0;
+	pub fn from_str(txt: &str) -> Option<Expression> {
+		let mut ret: Expression = Expression::new();
+		let mut i: usize = 0;
 
-        while i < txt.len() {
-            match RegexToken::from_str(txt, i) {
-                Some((token, inc_i)) => {
-                    if !ret.add_token(token) {
-                        return None;
-                    }
-                    i += inc_i
-                }
-                None if i >= txt.len() => break, //end of string reached
-                _ => return None,             //Some error before end of string
-            }
-        }
+		while i < txt.len() {
+			match RegexToken::from_str(txt, i) {
+				Some((token, inc_i)) => {
+					if !ret.add_token(token) {
+						return None;
+					}
+					i += inc_i
+				}
+				None if i >= txt.len() => break, //end of string reached
+				_ => return None,             //Some error before end of string
+			}
+		}
 
-        Some(ret)
-    }
+		Some(ret)
+	}
 
 	pub fn match_new_names<'a>(&mut self, names: &'a Vec<String>, target: &Expression) -> Option<Vec<(&'a str, String)>> {
 		let mut ret: Vec<(&str, String)> = Vec::new();
@@ -51,11 +51,16 @@ impl Expression {
 			self.reset_expression_text();
 		}
 
-		Some(ret)
+		if !self.has_collisions() {
+			Some(ret)
+		}
+		else {
+			None
+		}
 	}
 
-    fn match_name(&mut self, name: &String) -> bool {
-        let mut name_i: usize = 0;
+	fn match_name(&mut self, name: &String) -> bool {
+		let mut name_i: usize = 0;
 		let mut offset: i32 = -1;
 		let mut prev: String;
 		let size = self.expression.len();
@@ -82,7 +87,7 @@ impl Expression {
 		}
 
 		true
-    }
+	}
 
 	fn try_set_symbol_text(&mut self, curr_index: usize, txt: String) {
 		if txt != "" && curr_index > 0 {
@@ -131,45 +136,68 @@ impl Expression {
 		None
 	}
 
-    pub fn add_token(&mut self, value: Box<RegexToken>) -> bool {
-        let key = value.get_expr().to_string();
-		let is_txt = value.get_expr() == "";
-        let unique = !is_txt && self.unique_id(&value);
+	fn has_collisions(&mut self) -> bool {
+		let mut has_ast = false;
+		let mut has_others = false;
+		let mut expr_iter = self.expression.iter();
 
-        if unique {
-            self.wildcards
-                .entry(key)
-                .or_insert(Vec::new())
-                .push(self.expression.len());
-        }
+		while let Some(symbol) = expr_iter.next() {
+			match (symbol.matches_none(), symbol.get_expr() == "*") {
+				(true, true) => has_ast = true,
+				(true, false) => has_others = true,
+				(false, _) => {
+					has_ast = false;
+					has_others = false;
+				}
+			}
+			if has_ast && has_others {
+				eprintln!("Asterisk found together with other 0-characters matching symbols!\n  Please either remove these symbols or the asterisk");
+				return true;
+			}
+		}
+
+		false
+	}
+
+	pub fn add_token(&mut self, value: Box<RegexToken>) -> bool {
+		let key = value.get_expr().to_string();
+		let is_txt = value.get_expr() == "";
+		let unique = !is_txt && self.unique_id(&value);
+
+		if unique {
+			self.wildcards
+			.entry(key)
+			.or_insert(Vec::new())
+			.push(self.expression.len());
+		}
 		else {
 			eprintln!("Duplicate '{}' ID's found! (conflict on ID {})", key, value.get_id());
 		}
 
-        self.expression.push(value);
+		self.expression.push(value);
 
-        (unique || is_txt)
-    }
+		(unique || is_txt)
+	}
 
-    fn unique_id(&self, token: &Box<RegexToken>) -> bool {
-        if let Some(vector) = self.wildcards.get(token.get_expr()) {
-            !vector
-                .iter()
-                .any(|vec_token| token.get_id() == self.expression.get(*vec_token).expect("Wrong index in wildcards!").get_id())
-        } else {
-            true
-        }
-    }
+	fn unique_id(&self, token: &Box<RegexToken>) -> bool {
+		if let Some(vector) = self.wildcards.get(token.get_expr()) {
+			!vector
+			.iter()
+			.any(|vec_token| token.get_id() == self.expression.get(*vec_token).expect("Wrong index in wildcards!").get_id())
+		} else {
+			true
+		}
+	}
 }
 
 impl Display for Expression {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-        let mut err: Result<(), Error> = Ok(());
-        self.expression.iter().any(|elem| {
-            err = write!(f, "'{}'", elem);
-            err.is_err()
-        });
+	fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+		let mut err: Result<(), Error> = Ok(());
+		self.expression.iter().any(|elem| {
+			err = write!(f, "'{}'", elem);
+			err.is_err()
+		});
 
-        err
-    }
+		err
+	}
 }

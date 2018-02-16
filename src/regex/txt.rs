@@ -51,15 +51,6 @@ impl RegexTxt {
 }
 
 impl RegexToken for RegexTxt {
-    fn str_matches(&self, txt: &str, offset: i32) -> Option<(usize, i32)> {
-        if let Some((index, _)) = txt.match_indices(&self.expr).next() {
-            if offset == -1 || index <= (offset as usize) {
-                return Some((index + self.expr.len(), 0));
-            }
-        }
-        None
-    }
-
 	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
 		match txt.match_indices(&self.expr).nth(0) {
 			Some((index, _)) if offset == -1 || index <= (offset as usize) => {
@@ -83,6 +74,10 @@ impl RegexToken for RegexTxt {
 
 	fn get_text(&self) -> &str {
 		&self.expr
+	}
+
+	fn matches_none(&self) -> bool {
+		false
 	}
 
     fn cmp(&self, other: &Box<RegexToken>) -> bool {

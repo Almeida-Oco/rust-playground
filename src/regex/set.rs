@@ -61,18 +61,6 @@ impl RegexSet {
 }
 
 impl RegexToken for RegexSet {
-    fn str_matches(&self, txt: &str, _offset: i32) -> Option<(usize, i32)> {
-        if let Some(chr) = txt.chars().nth(0) {
-            if self.chars.binary_search(&chr).is_ok() {
-                Some((1, 0))
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
 	fn extract_text(&mut self, txt: &str, _offset: i32) -> Option<TextExtract> {
 		match txt.chars().nth(0) {
 			Some(chr) if self.chars.binary_search(&chr).is_ok() => {
@@ -97,6 +85,10 @@ impl RegexToken for RegexSet {
 
 	fn get_text(&self) -> &str {
 		&self.text
+	}
+
+	fn matches_none(&self) -> bool {
+		false
 	}
 
 	fn set_text(&mut self, _text: String) {}
