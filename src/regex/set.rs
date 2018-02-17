@@ -1,10 +1,9 @@
 use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
-
 pub struct RegexSet {
     chars: Vec<char>,
-	expr: String,
+    expr: String,
     text: String,
 }
 
@@ -20,12 +19,12 @@ impl RegexSet {
             offset += 1;
             match chr {
                 ']' if !escaped => {
-					let expr = RegexSet::extract_expr(&chars);
+                    let expr = RegexSet::extract_expr(&chars);
                     chars.sort();
                     return Some((
                         Box::new(RegexSet {
                             chars,
-							expr,
+                            expr,
                             text: String::new(),
                         }),
                         offset,
@@ -49,49 +48,45 @@ impl RegexSet {
         None
     }
 
-	fn extract_expr(chrs: &Vec<char>) -> String {
-		let mut string: String = String::with_capacity(chrs.len()+2);
-		string += "[";
-		for chr in chrs.iter() {
-			string.push(*chr)
-		}
-		string += "]";
-		string
-	}
+    fn extract_expr(chrs: &Vec<char>) -> String {
+        let mut string: String = String::with_capacity(chrs.len() + 2);
+        string += "[";
+        for chr in chrs.iter() {
+            string.push(*chr)
+        }
+        string += "]";
+        string
+    }
 }
 
 impl RegexToken for RegexSet {
-	fn extract_text(&mut self, txt: &str, _offset: i32) -> Option<TextExtract> {
-		match txt.chars().nth(0) {
-			Some(chr) if self.chars.binary_search(&chr).is_ok() => {
-				self.text = chr.to_string();
-				Some(TextExtract {
-					previous: String::new(),
-					inc_i: 1,
-					offset: 0,
-				})
-			},
-			_ => None,
-		}
-	}
+    fn extract_text(&mut self, txt: &str, _offset: i32) -> Option<TextExtract> {
+        match txt.chars().nth(0) {
+            Some(chr) if self.chars.binary_search(&chr).is_ok() => {
+                self.text = chr.to_string();
+                Some(TextExtract {
+                    previous: String::new(),
+                    inc_i: 1,
+                    offset: 0,
+                })
+            }
+            _ => None,
+        }
+    }
 
     fn get_id(&self) -> u32 {
         0
     }
 
     fn get_expr(&self) -> &str {
-		&self.expr
+        &self.expr
     }
 
-	fn get_text(&self) -> &str {
-		&self.text
-	}
+    fn get_text(&self) -> &str {
+        &self.text
+    }
 
-	fn matches_none(&self) -> bool {
-		false
-	}
-
-	fn set_text(&mut self, _text: String) {}
+    fn set_text(&mut self, _text: String) {}
 
     fn cmp(&self, other: &Box<RegexToken>) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
@@ -115,7 +110,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn from_str() {
+    fn test_from_str() {
         let txt1 = "foo]";
         let txt2 = "foo\\*bar]";
         let txt3 = "[foo]";
@@ -126,9 +121,9 @@ mod test {
         let (res2, _) = RegexSet::from_str(txt2).unwrap();
         let (res3, _) = RegexSet::from_str(txt3).unwrap();
 
-        assert_eq!("foo", res1.get_expr());
-        assert_eq!("*\\abfoor", res2.get_expr());
-        assert_eq!("[foo", res3.get_expr());
+        assert_eq!("[foo]", res1.get_expr());
+        assert_eq!("[foo\\*bar]", res2.get_expr());
+        assert_eq!("[[foo]", res3.get_expr());
 
         let res4 = RegexSet::from_str(txt4);
         let res5 = RegexSet::from_str(txt5);

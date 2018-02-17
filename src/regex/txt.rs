@@ -2,7 +2,7 @@ use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
 //WARNING!!! make sure this vector stays sorted
-const SYMBOLS: [char; 6] = ['$', '*', '.', '[', '\\', '^'];
+const SYMBOLS: [char; 4] = ['*', '.', '[', '\\'];
 
 pub struct RegexTxt {
     expr: String,
@@ -20,24 +20,19 @@ impl RegexTxt {
 
         for chr in txt.chars() {
             match SYMBOLS.binary_search(&chr) {
-                Ok(index) if SYMBOLS[index] == '\\' => {
-                    escaped = true;
+                Ok(index) if SYMBOLS[index] == '\\' => escaped = true,
+                Ok(index) if SYMBOLS[index] == '*' && !escaped => {
+                    expr.pop();
+                    offset -= 1;
+                    break;
                 }
-                Ok(_) => {
-                    if escaped {
-                        expr.push(chr);
-                        escaped = false;
-                    } else {
-                        break;
-                    }
+                Ok(_) if escaped => {
+                    expr.push(chr);
+                    escaped = false;
                 }
-                Err(_) => {
-                    if !escaped {
-                        expr.push(chr);
-                    } else {
-                        return not_escaped();
-                    }
-                }
+                Ok(_) => break,
+                Err(_) if !escaped => expr.push(chr),
+                Err(_) => return not_escaped(),
             }
             offset += 1;
         }
@@ -51,18 +46,17 @@ impl RegexTxt {
 }
 
 impl RegexToken for RegexTxt {
-	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
-		match txt.match_indices(&self.expr).nth(0) {
-			Some((index, _)) if offset == -1 || index <= (offset as usize) => {
-				txt.get(0..index).map(|previous| TextExtract {
-					previous: previous.to_string(),
-					inc_i: index + self.expr.len(),
-					offset: 0,
-				})
-			},
-			_ => None,
-		}
-	}
+    fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
+        match txt.match_indices(&self.expr).nth(0) {
+            Some((index, _)) if offset == -1 || index <= (offset as usize) => txt.get(0..index)
+                .map(|previous| TextExtract {
+                    previous: previous.to_string(),
+                    inc_i: index + self.expr.len(),
+                    offset: 0,
+                }),
+            _ => None,
+        }
+    }
 
     fn get_id(&self) -> u32 {
         0
@@ -72,13 +66,9 @@ impl RegexToken for RegexTxt {
         &self.expr
     }
 
-	fn get_text(&self) -> &str {
-		&self.expr
-	}
-
-	fn matches_none(&self) -> bool {
-		false
-	}
+    fn get_text(&self) -> &str {
+        &self.expr
+    }
 
     fn cmp(&self, other: &Box<RegexToken>) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
@@ -103,7 +93,6 @@ impl PartialEq for RegexTxt {
 mod test {
     use super::*;
 
-    #[test]
     fn from_str() {
         let txt1 = "foo*bar";
         let txt2 = "foo*";

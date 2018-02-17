@@ -1,5 +1,6 @@
 use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
+use regex::ast::RegexAst;
 
 pub struct RegexDot {
     id: u32,
@@ -10,8 +11,8 @@ impl RegexDot {
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
         let err_msg = "All symbols must have an associated ID between [0,9]";
         match txt.chars().nth(0) {
-            Some(id_chr) if id_chr.is_digit(10) => {
-                let id = id_chr.to_digit(10).unwrap();
+            Some(next_chr) if next_chr.is_digit(10) => {
+                let id = next_chr.to_digit(10).unwrap();
                 Some((
                     Box::new(RegexDot {
                         id,
@@ -20,8 +21,15 @@ impl RegexDot {
                     2,
                 ))
             }
-            Some(id_chr) => {
-                eprintln!("Found non numeric char after '.': {}\n{}", id_chr, err_msg);
+            Some(next_chr) if next_chr == '*' => match RegexAst::from_str(&format!(".{}", txt)) {
+                Some((symbol, _)) => Some((symbol, 2)),
+                None => None,
+            },
+            Some(next_chr) => {
+                eprintln!(
+                    "Found non numeric char after '.': {}\n{}",
+                    next_chr, err_msg
+                );
                 None
             }
             None => {
@@ -33,20 +41,19 @@ impl RegexDot {
 }
 
 impl RegexToken for RegexDot {
-	fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
-		match txt.chars().nth(0) {
-			Some(chr) if offset >= 0 => {
-				self.text = chr.to_string();
-				Some(TextExtract {
-					previous: String::new(),
-					inc_i: 0,
-					offset: 1,
-				})
-			},
-			Some(_) => panic!("RegexDot::extract_text({}, {}), wrong offset", txt, offset),
-			None => None,
-		}
-	}
+    fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
+        match txt.chars().nth(0) {
+            Some(chr) => {
+                self.text = chr.to_string();
+                Some(TextExtract {
+                    previous: String::new(),
+                    inc_i: 1,
+                    offset: 0,
+                })
+            }
+            None => None,
+        }
+    }
 
     fn get_id(&self) -> u32 {
         self.id
@@ -56,13 +63,9 @@ impl RegexToken for RegexDot {
         "."
     }
 
-	fn get_text(&self) -> &str {
-		&self.text
-	}
-
-	fn matches_none(&self) -> bool {
-		true
-	}
+    fn get_text(&self) -> &str {
+        &self.text
+    }
 
     fn cmp(&self, other: &Box<RegexToken>) -> bool {
         self.get_id() == other.get_id() && self.get_expr() == other.get_expr()
@@ -90,7 +93,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn from_str() {
+    fn test_from_str() {
         let txt1 = "0foo";
         let txt2 = "10foo";
         let txt3 = "9foo";
@@ -98,8 +101,8 @@ mod test {
         let (res1, off1) = RegexDot::from_str(txt1).unwrap();
         let (res2, off2) = RegexDot::from_str(txt2).unwrap();
         let (res3, off3) = RegexDot::from_str(txt3).unwrap();
-        let res4 = RegexDot::from_str(".foo");
-        let res5 = RegexDot::from_str(".");
+        let res4 = RegexDot::from_str("a.foo");
+        let res5 = RegexDot::from_str("B.");
 
         assert_eq!(".", res1.get_expr());
         assert_eq!(0, res1.get_id());

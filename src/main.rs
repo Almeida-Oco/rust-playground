@@ -19,17 +19,19 @@ fn main() {
 
     let regex1 = Expression::from_str(&args[1]);
     let dir_f_names = thread1.join().unwrap();
-	let regex2 = Expression::from_str(&args[2]);
+    let regex2 = Expression::from_str(&args[2]);
 
-    if let (Some(mut match_regex), Some(target_regex), Some(f_names)) = (regex1, regex2, dir_f_names) {
-		match match_regex.match_new_names(&f_names, &target_regex) {
-			Some(ref names) if target_names_different(&names) => {
-				rename_files(names);
-			},
-			Some(_) => eprintln!("Duplicate names found for the given target regex!\n  Please change the regex so that there are no collisions!"),
-			_ => (),
-		}
-    }
+    println!("{}", regex1.unwrap());
+
+    // if let (Some(mut match_regex), Some(target_regex), Some(f_names)) = (regex1, regex2, dir_f_names) {
+    // 	match match_regex.match_new_names(&f_names, &target_regex) {
+    // 		Some(ref names) if target_names_different(&names) => {
+    // 			rename_files(names);
+    // 		},
+    // 		Some(ref names) => eprintln!("Duplicate names found for the given target regex!\n  Please change the regex so that there are no collisions!\n    {:?}", names),
+    // 		_ => (),
+    // 	}
+    // }
 }
 
 fn args_valid(args: &Vec<String>) -> bool {
@@ -66,30 +68,29 @@ fn get_dir_f_names<'a>(path: &'a str) -> Option<Vec<String>> {
 }
 
 fn target_names_different(names: &Vec<(&str, String)>) -> bool {
-	let mut diff_names: Vec<&str> = Vec::with_capacity(names.len());
-	let mut iter = names.iter();
-	while let Some(&(_, ref name)) = iter.next() {
-		if !diff_names.contains(&name.as_str()) {
-			diff_names.push(name.as_str());
-		}
-		else {
-			return false;
-		}
-	}
+    let mut diff_names: Vec<&str> = Vec::with_capacity(names.len());
+    let mut iter = names.iter();
+    while let Some(&(_, ref name)) = iter.next() {
+        if !diff_names.contains(&name.as_str()) {
+            diff_names.push(name.as_str());
+        } else {
+            return false;
+        }
+    }
 
-	true
+    true
 }
 
-fn rename_files(names: &Vec<(&str, String)>)  {
-	for &(curr_name, ref new_name) in names {
-		match user_io::get_confirmation(curr_name, new_name) {
-			Some(true) => {
-				if let Err(err) = fs::rename(curr_name, new_name) {
-					eprintln!("{}", err.description());
-				}
-			},
-			Some(false) => (),
-			None => return,
-		}
-	}
+fn rename_files(names: &Vec<(&str, String)>) {
+    for &(curr_name, ref new_name) in names {
+        match user_io::get_confirmation(curr_name, new_name) {
+            Some(true) => {
+                if let Err(err) = fs::rename(curr_name, new_name) {
+                    eprintln!("{}", err.description());
+                }
+            }
+            Some(false) => (),
+            None => return,
+        }
+    }
 }

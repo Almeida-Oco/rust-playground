@@ -51,12 +51,7 @@ impl Expression {
 			self.reset_expression_text();
 		}
 
-		if !self.has_collisions() {
-			Some(ret)
-		}
-		else {
-			None
-		}
+        Some(ret)
 	}
 
 	fn match_name(&mut self, name: &String) -> bool {
@@ -125,7 +120,6 @@ impl Expression {
 
 	fn get_wildcard(&self, token: &Box<RegexToken>) -> Option<&Box<RegexToken>> {
 		if let Some(vec) = self.wildcards.get(token.get_expr()) {
-
 			for elem in vec.iter() {
 				let symbol = self.expression.get(*elem).expect("Expression::get_wildcard() wrong index!");
 				if token.cmp(symbol) {
@@ -134,29 +128,6 @@ impl Expression {
 			}
 		}
 		None
-	}
-
-	fn has_collisions(&mut self) -> bool {
-		let mut has_ast = false;
-		let mut has_others = false;
-		let mut expr_iter = self.expression.iter();
-
-		while let Some(symbol) = expr_iter.next() {
-			match (symbol.matches_none(), symbol.get_expr() == "*") {
-				(true, true) => has_ast = true,
-				(true, false) => has_others = true,
-				(false, _) => {
-					has_ast = false;
-					has_others = false;
-				}
-			}
-			if has_ast && has_others {
-				eprintln!("Asterisk found together with other 0-characters matching symbols!\n  Please either remove these symbols or the asterisk");
-				return true;
-			}
-		}
-
-		false
 	}
 
 	pub fn add_token(&mut self, value: Box<RegexToken>) -> bool {
