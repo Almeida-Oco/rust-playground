@@ -7,6 +7,7 @@ use engine::Expression;
 
 mod regex;
 mod engine;
+mod user_io;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -24,13 +25,11 @@ fn main() {
 		match match_regex.match_new_names(&f_names, &target_regex) {
 			Some(ref names) if target_names_different(&names) => {
 				rename_files(names);
-				println!("Rename successfull!");
 			},
 			Some(_) => eprintln!("Duplicate names found for the given target regex!\n  Please change the regex so that there are no collisions!"),
 			_ => (),
 		}
     }
-
 }
 
 fn args_valid(args: &Vec<String>) -> bool {
@@ -81,10 +80,16 @@ fn target_names_different(names: &Vec<(&str, String)>) -> bool {
 	true
 }
 
-fn rename_files(names: &Vec<(&str, String)>) {
+fn rename_files(names: &Vec<(&str, String)>)  {
 	for &(curr_name, ref new_name) in names {
-		if let Err(err) = fs::rename(curr_name, new_name) {
-			eprintln!("{}", err.description());
+		match user_io::get_confirmation(curr_name, new_name) {
+			Some(true) => {
+				if let Err(err) = fs::rename(curr_name, new_name) {
+					eprintln!("{}", err.description());
+				}
+			},
+			Some(false) => (),
+			None => return,
 		}
 	}
 }
