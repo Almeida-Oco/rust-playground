@@ -13,3 +13,25 @@ Trying to create an easier way to rename files in a system using regex.
 * Character sets '[<set>]' are available, though escaping characters inside them might not fully work
 * Regex symbols are now assigned the respective matching text, to easily rename the files.
 * Conversion from matching regex to target regex is now done.
+
+# Symbols
+
+### Asterisk (*)
+The asterisk matches 0 or more of any characters.
+It must be followed by its ID.
+
+##### Examples
+Lets assume a directory contains the following files:
+
+    foo[remove]bar  [remove]bar  bar[remove]foo  f[remove]b  M[remove] foo_bar
+
+And say that we wanted to remove the '[remove]' bit of every file that contains it.
+We would then run the following command:
+    
+    rn '*0\[remove]*1' '*0*1'
+
+(We have to enclose the regular expressions in ' so that the shell does not interpret them).
+
+This would rename the files that match the first regular expression, meaning the directory would contain the following files:
+
+    foobar  bar  barfoo  fb  M  foo_bar 
