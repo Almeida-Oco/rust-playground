@@ -5,6 +5,7 @@ Trying to create an easier way to rename files in a system using regex.
 
 # Status
 
+* **Renaming is now possible**
 * Pattern matching to names.
 * Currently possible wild characters are '*' and '.'
 * Restriction characters are '$' and '^'
