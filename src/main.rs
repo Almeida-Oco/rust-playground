@@ -9,6 +9,8 @@ mod regex;
 mod engine;
 mod user_io;
 
+#[allow(dead_code)]
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if !args_valid(&args) {
@@ -21,17 +23,20 @@ fn main() {
     let dir_f_names = thread1.join().unwrap();
     let regex2 = Expression::from_str(&args[2]);
 
-    println!("{}", regex1.unwrap());
-
-    // if let (Some(mut match_regex), Some(target_regex), Some(f_names)) = (regex1, regex2, dir_f_names) {
-    // 	match match_regex.match_new_names(&f_names, &target_regex) {
-    // 		Some(ref names) if target_names_different(&names) => {
-    // 			rename_files(names);
-    // 		},
-    // 		Some(ref names) => eprintln!("Duplicate names found for the given target regex!\n  Please change the regex so that there are no collisions!\n    {:?}", names),
-    // 		_ => (),
-    // 	}
-    // }
+    if let (Some(mut match_regex), Some(target_regex), Some(f_names)) =
+        (regex1, regex2, dir_f_names)
+    {
+        println!("REGEX1 = {}", match_regex);
+        println!("REGEX2 = {}", target_regex);
+        match match_regex.match_new_names(&f_names, &target_regex) {
+    		Some(ref names) if target_names_different(&names) => {
+                println!("NAMES = {:?}", names);
+                // rename_files(names);
+    		},
+    		Some(ref names) => eprintln!("Duplicate names found for the given target regex!\n  Please change the regex so that there are no collisions!\n    {:?}", names),
+    		_ => (),
+    	}
+    }
 }
 
 fn args_valid(args: &Vec<String>) -> bool {

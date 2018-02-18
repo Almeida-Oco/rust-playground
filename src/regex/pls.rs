@@ -39,7 +39,7 @@ impl RegexPls {
 }
 
 impl RegexToken for RegexPls {
-    fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
+    fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract> {
         None
     }
 
@@ -93,7 +93,12 @@ mod tests {
         assert!(result1.is_none());
 
         assert_eq!(".+9", token0.to_string());
+        assert_eq!(3, off0);
+
         assert_eq!("A+0", token1.to_string());
+        assert_eq!(3, off1);
+
         assert_eq!("C+5", token2.to_string());
+        assert_eq!(3, off2);
     }
 }

@@ -18,7 +18,7 @@ use regex::rpt::RegexRpt;
 use regex::set::RegexSet;
 
 pub trait RegexToken: Display + Send + Sync {
-    fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract>;
+    fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract>;
 
     fn set_text(&mut self, text: String);
     fn get_id(&self) -> u32;
@@ -31,13 +31,12 @@ pub trait RegexToken: Display + Send + Sync {
 impl RegexToken {
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn from_str(txt: &str, index: usize) -> Option<(Box<RegexToken>, usize)> {
-        let mut chrs = txt.chars();
         let write_error = |msg| {
             eprintln!("{}", msg);
             None
         };
-
-        match (chrs.nth(index), chrs.nth(index + 1), txt.get(index+2..)) {
+        println!("TXT: {}", txt.get(index..).unwrap());
+        match (txt.chars().nth(index), txt.chars().nth(index+1), txt.get(index+2..)) {
             (Some(chr1), Some('*'), Some(rem_txt)) => RegexAst::from_str(&format!("{}*{}", chr1, rem_txt)),
             (Some('*'), _, _) => write_error("No character associated to *"),
             (Some(chr1), Some('{'), Some(rem_txt)) => RegexRpt::from_str(&format!("{}{}{}", chr1, '{', rem_txt)),
@@ -57,7 +56,7 @@ impl RegexToken {
 pub struct TextExtract {
     previous: String,
     inc_i: usize,
-    offset: i32,
+    offset: isize,
 }
 
 impl TextExtract {
@@ -69,7 +68,7 @@ impl TextExtract {
         self.inc_i
     }
 
-    pub fn get_offset(&self) -> i32 {
+    pub fn get_offset(&self) -> isize {
         self.offset
     }
 }

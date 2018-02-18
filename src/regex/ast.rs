@@ -1,5 +1,6 @@
 use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
+use std::isize;
 
 pub struct RegexAst {
     id: u32,
@@ -36,15 +37,38 @@ impl RegexAst {
             _ => write_error(format!("No ID associated to '*'\n{}", err_msg)),
         }
     }
+
+    fn calc_max_offset(&self, txt: &str, curr_offset: isize) -> isize {
+        if self.chr != '\0' {
+            let mut max_offset: isize = curr_offset;
+            for chr in txt.chars() {
+                if max_offset >= 0 && chr != self.chr {
+                    break;
+                }
+                max_offset += 1;
+            }
+
+            curr_offset - max_offset
+        } else {
+            isize::MIN + 1
+        }
+    }
 }
 
 impl RegexToken for RegexAst {
-    fn extract_text(&mut self, _txt: &str, _offset: i32) -> Option<TextExtract> {
-        Some(TextExtract {
-            previous: String::new(),
-            inc_i: 0,
-            offset: -1,
-        })
+    fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract> {
+        match self.chr {
+            '\0' => Some(TextExtract {
+                previous: String::new(),
+                inc_i: 0,
+                offset: isize::MIN + 1,
+            }),
+            chr => Some(TextExtract {
+                previous: String::new(),
+                inc_i: 0,
+                offset: self.calc_max_offset(txt, offset),
+            }),
+        }
     }
 
     fn get_id(&self) -> u32 {

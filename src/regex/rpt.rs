@@ -119,7 +119,7 @@ impl RegexRpt {
 }
 
 impl RegexToken for RegexRpt {
-    fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
+    fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract> {
         None
     }
 

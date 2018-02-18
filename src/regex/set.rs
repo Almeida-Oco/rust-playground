@@ -2,6 +2,7 @@ use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexSet {
+    id: u32,
     chars: Vec<char>,
     expr: String,
     text: String,
@@ -18,18 +19,31 @@ impl RegexSet {
         while let Some(chr) = it.next() {
             offset += 1;
             match chr {
-                ']' if !escaped => {
-                    let expr = RegexSet::extract_expr(&chars);
-                    chars.sort();
-                    return Some((
-                        Box::new(RegexSet {
-                            chars,
-                            expr,
-                            text: String::new(),
-                        }),
-                        offset,
-                    ));
-                }
+                //End of set reached
+                ']' if !escaped => match it.next() {
+                    Some(id_chr) if id_chr.is_digit(10) => {
+                        let id = id_chr.to_digit(10).unwrap();
+                        let expr = RegexSet::extract_expr(&chars);
+                        chars.sort();
+                        return Some((
+                            Box::new(RegexSet {
+                                id,
+                                chars,
+                                expr,
+                                text: String::new(),
+                            }),
+                            offset + 1,
+                        ));
+                    }
+                    Some(id_chr) => {
+                        eprintln!("Non numeric character found after '[...]'");
+                        return None;
+                    }
+                    None => {
+                        eprintln!("No ID character found after '[...]'");
+                        return None;
+                    }
+                },
                 '\\' if !escaped => {
                     escaped = true;
                 }
@@ -60,22 +74,27 @@ impl RegexSet {
 }
 
 impl RegexToken for RegexSet {
-    fn extract_text(&mut self, txt: &str, _offset: i32) -> Option<TextExtract> {
-        match txt.chars().nth(0) {
-            Some(chr) if self.chars.binary_search(&chr).is_ok() => {
+    fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract> {
+        let char_vec: Vec<(usize, &str)> = txt.rmatch_indices(|ref chr| {
+            self.chars.binary_search(chr).is_ok()
+        }).collect();
+
+        for (index, chr) in char_vec {
+            if index <= (-offset as usize) {
                 self.text = chr.to_string();
-                Some(TextExtract {
-                    previous: String::new(),
-                    inc_i: 1,
+                return txt.get(0..index).map(|previous| TextExtract {
+                    previous: previous.to_string(),
+                    inc_i: index + 1,
                     offset: 0,
-                })
+                });
             }
-            _ => None,
         }
+
+        None
     }
 
     fn get_id(&self) -> u32 {
-        0
+        self.id
     }
 
     fn get_expr(&self) -> &str {
@@ -95,7 +114,7 @@ impl RegexToken for RegexSet {
 
 impl Display for RegexSet {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "{}", self.get_expr())
+        write!(f, "{}{}", self.expr, self.id)
     }
 }
 
@@ -111,19 +130,24 @@ mod test {
 
     #[test]
     fn test_from_str() {
-        let txt1 = "foo]";
-        let txt2 = "foo\\*bar]";
-        let txt3 = "[foo]";
+        let txt1 = "foo]02";
+        let txt2 = "foo\\*bar]22";
+        let txt3 = "[foo]9";
         let txt4 = "foo";
         let txt5 = "foo\\]";
 
-        let (res1, _) = RegexSet::from_str(txt1).unwrap();
-        let (res2, _) = RegexSet::from_str(txt2).unwrap();
-        let (res3, _) = RegexSet::from_str(txt3).unwrap();
+        let (token1, off1) = RegexSet::from_str(txt1).expect("Panicked at txt1!");
+        let (token2, off2) = RegexSet::from_str(txt2).expect("Panicked at txt2!");
+        let (token3, off3) = RegexSet::from_str(txt3).expect("Panicked at txt3!");
 
-        assert_eq!("[foo]", res1.get_expr());
-        assert_eq!("[foo\\*bar]", res2.get_expr());
-        assert_eq!("[[foo]", res3.get_expr());
+        assert_eq!("[foo]", token1.get_expr());
+        assert_eq!(0, token1.get_id());
+
+        assert_eq!("[foo\\*bar]", token2.get_expr());
+        assert_eq!(2, token2.get_id());
+
+        assert_eq!("[[foo]", token3.get_expr());
+        assert_eq!(9, token3.get_id());
 
         let res4 = RegexSet::from_str(txt4);
         let res5 = RegexSet::from_str(txt5);

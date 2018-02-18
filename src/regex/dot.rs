@@ -41,8 +41,8 @@ impl RegexDot {
 }
 
 impl RegexToken for RegexDot {
-    fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
-        match txt.chars().nth(0) {
+    fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract> {
+        match txt.chars().nth(-offset as usize) {
             Some(chr) => {
                 self.text = chr.to_string();
                 Some(TextExtract {
@@ -51,7 +51,10 @@ impl RegexToken for RegexDot {
                     offset: 0,
                 })
             }
-            None => None,
+            None => panic!(
+                "RegexDot::extract_text({}, {}), what to do now?",
+                txt, offset
+            ),
         }
     }
 

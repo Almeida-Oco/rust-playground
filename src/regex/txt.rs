@@ -46,16 +46,20 @@ impl RegexTxt {
 }
 
 impl RegexToken for RegexTxt {
-    fn extract_text(&mut self, txt: &str, offset: i32) -> Option<TextExtract> {
-        match txt.match_indices(&self.expr).nth(0) {
-            Some((index, _)) if offset == -1 || index <= (offset as usize) => txt.get(0..index)
-                .map(|previous| TextExtract {
+    fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract> {
+        let mut it = txt.rmatch_indices(&self.expr);
+        while let Some((index, _)) = it.next() {
+            println!("OFFSET = {}", offset);
+            if index <= (-offset as usize) {
+                return txt.get(0..index).map(|previous| TextExtract {
                     previous: previous.to_string(),
                     inc_i: index + self.expr.len(),
                     offset: 0,
-                }),
-            _ => None,
+                });
+            }
         }
+
+        None
     }
 
     fn get_id(&self) -> u32 {
@@ -63,7 +67,7 @@ impl RegexToken for RegexTxt {
     }
 
     fn get_expr(&self) -> &str {
-        &self.expr
+        ""
     }
 
     fn get_text(&self) -> &str {
@@ -79,7 +83,7 @@ impl RegexToken for RegexTxt {
 
 impl Display for RegexTxt {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "{}", self.expr)
+        write!(f, "\\{}/", self.expr)
     }
 }
 
@@ -93,27 +97,43 @@ impl PartialEq for RegexTxt {
 mod test {
     use super::*;
 
-    fn from_str() {
+    #[test]
+    fn test_from_str() {
         let txt1 = "foo*bar";
-        let txt2 = "foo*";
-        let txt3 = "foo\\?";
+        let txt2 = "foo.";
+        let txt3 = "foo[";
+        let txt4 = "foo\\*";
+        let txt5 = "foo\\[";
+        let txt6 = "foo\\.";
 
-        let (res1, off1) = RegexTxt::from_str(txt1).unwrap();
-        let (res2, off2) = RegexTxt::from_str(txt2).unwrap();
-        let (res3, off3) = RegexTxt::from_str(txt3).unwrap();
-        let res4 = RegexTxt::from_str("foo\\");
-        let res5 = RegexTxt::from_str("foo\\a");
+        let (token1, off1) = RegexTxt::from_str(txt1).expect("Panicked at txt1");
+        let (token2, off2) = RegexTxt::from_str(txt2).expect("Panicked at txt2");
+        let (token3, off3) = RegexTxt::from_str(txt3).expect("Panicked at txt3");
+        let (token4, off4) = RegexTxt::from_str(txt4).expect("Panicked at txt4");
+        let (token5, off5) = RegexTxt::from_str(txt5).expect("Panicked at txt5");
+        let (token6, off6) = RegexTxt::from_str(txt6).expect("Panicked at txt6");
+        let result1 = RegexTxt::from_str("foo\\");
+        let result2 = RegexTxt::from_str("foo\\a");
 
-        assert_eq!("foo", res1.get_expr());
-        assert_eq!(3, off1);
+        assert_eq!("fo", token1.get_text(), "token1.get_text() failed!");
+        assert_eq!(2, off1);
 
-        assert_eq!("foo", res2.get_expr());
+        assert_eq!("foo", token2.get_text(), "token2.get_text() failed!");
         assert_eq!(3, off2);
 
-        assert_eq!("foo?", res3.get_expr());
-        assert_eq!(5, off3);
+        assert_eq!("foo", token3.get_text(), "token3.get_text() failed!");
+        assert_eq!(3, off3);
 
-        assert!(res4.is_none());
-        assert!(res5.is_none());
+        assert_eq!("foo*", token4.get_text(), "token4.get_text() failed!");
+        assert_eq!(5, off4);
+
+        assert_eq!("foo[", token5.get_text(), "token5.get_text() failed!");
+        assert_eq!(5, off5);
+
+        assert_eq!("foo.", token6.get_text(), "token6.get_text() failed!");
+        assert_eq!(5, off6);
+
+        assert!(result1.is_none());
+        assert!(result2.is_none());
     }
 }
