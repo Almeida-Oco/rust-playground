@@ -4,71 +4,90 @@ use std::isize;
 
 pub struct RegexAst {
     id: u32,
-    chr: char,
+    char_set: Vec<char>,
     text: String,
 }
 
 impl RegexAst {
+    fn new(id: u32, char_set: Vec<char>) -> Box<RegexToken> {
+        Box::new(RegexAst {
+            id,
+            char_set,
+            text: String::new(),
+        })
+    }
+
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
-        let write_error = |msg: String| {
-            eprintln!("{}", msg);
-            None
-        };
-        let err_msg = "All symbols must have an associated ID between [0,9]";
         match (txt.chars().nth(0), txt.chars().nth(2)) {
             (Some(ast_chr), Some(id_chr)) if id_chr.is_digit(10) => {
-                let mut chr = ast_chr;
-                if ast_chr == '.' {
-                    chr = '\0';
+                let mut char_set = Vec::new();
+                let id = id_chr.to_digit(10).unwrap();
+                if ast_chr != '.' {
+                    char_set.push(ast_chr);
                 }
-                Some((
-                    Box::new(RegexAst {
-                        id: id_chr.to_digit(10).unwrap(),
-                        chr,
-                        text: String::new(),
-                    }),
-                    3,
-                ))
+
+                Some((RegexAst::new(id, char_set), 3))
             }
-            (Some(_), Some(id_chr)) => write_error(format!(
-                "Found non numeric char after '*': {}\n{}",
-                id_chr, err_msg
-            )),
-            _ => write_error(format!("No ID associated to '*'\n{}", err_msg)),
+            (Some(_), Some(id_chr)) => {
+                RegexToken::id_error(format!("Found non numeric char after '*': {}", id_chr))
+            }
+            _ => RegexToken::id_error("No ID associated to '*'".to_string()),
         }
     }
 
-    fn calc_max_offset(&self, txt: &str, curr_offset: isize) -> isize {
-        if self.chr != '\0' {
-            let mut max_offset: isize = curr_offset;
-            for chr in txt.chars() {
-                if max_offset >= 0 && chr != self.chr {
-                    break;
-                }
-                max_offset += 1;
+    pub fn from_char_set(
+        txt: &str,
+        mut char_set: Vec<char>,
+        off: usize,
+    ) -> Option<(Box<RegexToken>, usize)> {
+        match (txt.chars().nth(off), txt.chars().nth(off + 1)) {
+            (Some('*'), Some(id_chr)) if id_chr.is_digit(10) => {
+                let id = id_chr.to_digit(10).unwrap();
+                char_set.sort();
+                Some((RegexAst::new(id, char_set), off + 2))
             }
-
-            curr_offset - max_offset
-        } else {
-            isize::MIN + 1
+            (Some('*'), Some(id_chr)) => {
+                RegexToken::id_error(format!("Found non numeric char after '*': {}", id_chr))
+            }
+            _ => RegexToken::id_error("No ID associated to '*'".to_string()),
         }
+    }
+
+    fn in_char_set(&self, chr: char) -> Option<char> {
+        self.char_set
+            .binary_search(&chr)
+            .ok()
+            .and_then(|_| Some(chr))
+    }
+
+    fn matches_all(&self) -> bool {
+        self.char_set.len() == 0
+    }
+
+    fn calc_max_offset(&self, txt: &str, curr_offset: isize) -> isize {
+        // if self.matches_all() {
+        //     isize::MIN + 1
+        // }
+        // if self.chr != '\0' {
+        //     let mut max_offset: isize = curr_offset;
+        //     for chr in txt.chars() {
+        //         if max_offset >= 0 && chr != self.chr {
+        //             break;
+        //         }
+        //         max_offset += 1;
+        //     }
+        //
+        //     curr_offset - max_offset
+        // } else {
+        //     isize::MIN + 1
+        // }
+        0
     }
 }
 
 impl RegexToken for RegexAst {
     fn extract_text(&mut self, txt: &str, offset: isize) -> Option<TextExtract> {
-        match self.chr {
-            '\0' => Some(TextExtract {
-                previous: String::new(),
-                inc_i: 0,
-                offset: isize::MIN + 1,
-            }),
-            chr => Some(TextExtract {
-                previous: String::new(),
-                inc_i: 0,
-                offset: self.calc_max_offset(txt, offset),
-            }),
-        }
+        None
     }
 
     fn get_id(&self) -> u32 {
@@ -100,18 +119,19 @@ impl PartialEq for RegexAst {
 
 impl Display for RegexAst {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        let mut chr = self.chr;
-        if chr == '\0' {
-            chr = '.'
-        }
-        write!(f, "{}*{}", chr, self.id)
+        write!(
+            f,
+            "{}*{}",
+            RegexToken::set_to_string(&self.char_set),
+            self.id
+        )
     }
 }
 
 #[cfg(test)]
 impl RegexAst {
     fn to_string(&self) -> String {
-        format!("{}*{}", self.chr, self.id)
+        format!("{}*{}", RegexToken::set_to_string(&self.char_set), self.id)
     }
 }
 

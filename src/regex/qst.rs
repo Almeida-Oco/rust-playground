@@ -3,38 +3,47 @@ use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexQst {
     id: u32,
-    chr: char,
+    char_set: Vec<char>,
     text: String,
 }
 
 impl RegexQst {
-    pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
-        let write_error = |msg: String| {
-            eprintln!("{}", msg);
-            None
-        };
-        let err_msg = "All symbols must have an associated ID between [0,9]";
+    fn new(id: u32, char_set: Vec<char>) -> Box<RegexToken> {
+        Box::new(RegexQst {
+            id,
+            char_set,
+            text: String::new(),
+        })
+    }
 
+    pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
         match (txt.chars().nth(0), txt.chars().nth(2)) {
-            (Some(qst_chr), Some(id_chr)) if id_chr.is_digit(10) => {
-                let mut chr = qst_chr;
-                if chr == '.' {
-                    chr = '\0';
+            (Some(chr), Some(id_chr)) if id_chr.is_digit(10) => {
+                let id = id_chr.to_digit(10).unwrap();
+                let mut char_set = Vec::new();
+                if chr != '.' {
+                    char_set.push(chr);
                 }
-                Some((
-                    Box::new(RegexQst {
-                        id: id_chr.to_digit(10).unwrap(),
-                        chr,
-                        text: String::new(),
-                    }),
-                    3,
-                ))
+                Some((RegexQst::new(id, char_set), 3))
             }
-            (Some(_), Some(id_chr)) => write_error(format!(
-                "Found non numeric character after '?': {}\n{}",
-                id_chr, err_msg
-            )),
-            _ => write_error(format!("No ID associated to '?'\n{}", err_msg)),
+            (Some(_), Some(id_chr)) => {
+                RegexToken::id_error(format!("Found non numeric character after '?': {}", id_chr))
+            }
+            _ => RegexToken::id_error("No ID associated to '?'".to_string()),
+        }
+    }
+
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    pub fn from_char_set(txt: &str, char_set: Vec<char>, off: usize) -> Option<(Box<RegexToken>, usize)>  {
+        match (txt.chars().nth(off), txt.chars().nth(off+1)) {
+            (Some('?'), Some(id_chr)) if id_chr.is_digit(10) => {
+                let id = id_chr.to_digit(10).unwrap();
+                Some((RegexQst::new(id, char_set), off+2))
+            },
+            (Some('?'), Some(id_chr)) => {
+                RegexToken::id_error(format!("Found non numeric char after '?': {}", id_chr))
+            }
+            _ => RegexToken::id_error("No ID associated to '?'".to_string()),
         }
     }
 }
@@ -67,18 +76,14 @@ impl RegexToken for RegexQst {
 
 impl Display for RegexQst {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        let mut chr = self.chr;
-        if chr == '\0' {
-            chr = '.'
-        }
-        write!(f, "{}?{}", chr, self.id)
+        write!(f, "{}?{}", RegexToken::set_to_string(&self.char_set), self.id)
     }
 }
 
 #[cfg(test)]
 impl RegexQst {
     fn to_string(&self) -> String {
-        format!("{}?{}", self.chr, self.id)
+        format!("{}?{}", RegexToken::set_to_string(&self.char_set), self.id)
     }
 }
 

@@ -1,53 +1,69 @@
 use super::{RegexToken, TextExtract};
 use std::fmt::{Display, Formatter, Result};
 use std::ops::Range;
-use std::u32;
+use std::usize;
 
 pub struct RegexRpt {
     id: u32,
-    chr: char,
-    range: Range<u32>,
+    char_set: Vec<char>,
+    range: Range<usize>,
     text: String,
 }
 
 impl RegexRpt {
+    fn new(id: u32, char_set: Vec<char>, range: Range<usize>) -> Box<RegexToken> {
+        Box::new(RegexRpt {
+            id,
+            char_set,
+            range,
+            text: String::new(),
+        })
+    }
+
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
-        let write_error = |msg: String| {
-            eprintln!("{}", msg);
-            None
-        };
-        let err_msg = "All symbols must have an associated ID between [0,9]";
-        let mut chr = txt.chars()
-            .nth(0)
-            .expect(&format!("RegexRpt::from_str({}), no first character!", txt));
-        if chr == '.' {
-            chr = '\0';
+        let mut char_set = Vec::new();
+        match txt.chars().nth(0) {
+            Some(chr) if chr != '.' => char_set.push(chr),
+            None => panic!("RegexRpt::from_str({}), no first character!", txt),
+            _ => (),
         }
-        match RegexRpt::extract_range(txt.get(1..).expect(&format!(
-            "RegexRpt::from_str({}), no text after 1st character!",
-            txt
-        ))) {
+
+        match RegexRpt::extract_range(txt.get(1..).expect("RegexRpt no txt after 1st chr")) {
             Some((range, offset)) => match txt.chars().nth(offset + 1) {
-                Some(id_chr) if id_chr.is_digit(10) => Some((
-                    Box::new(RegexRpt {
-                        id: id_chr.to_digit(10).unwrap(),
-                        chr,
-                        range,
-                        text: String::new(),
-                    }),
-                    offset + 2,
+                Some(id_chr) if id_chr.is_digit(10) => {
+                    let id = id_chr.to_digit(10).unwrap();
+                    Some((RegexRpt::new(id, char_set, range), offset + 2))
+                }
+                Some(id_chr) => RegexToken::id_error(format!(
+                    "Found non numeric character after '{{...}}': {}",
+                    id_chr
                 )),
-                Some(id_chr) => write_error(format!(
-                    "Found non numeric character after '{{...}}': {}\n{}",
-                    id_chr, err_msg
-                )),
-                _ => write_error(format!("No ID associated to '{{...}}'\n{}", err_msg)),
+                _ => RegexToken::id_error("No ID associated to '{{...}}'".to_string()),
             },
             None => None,
         }
     }
 
-    fn extract_range(txt: &str) -> Option<(Range<u32>, usize)> {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    pub fn from_char_set(txt: &str, char_set: Vec<char>, off: usize) -> Option<(Box<RegexToken>, usize)>  {
+        match RegexRpt::extract_range(txt.get(off..).expect("RegexRpt no txt after 1st chr")) {
+            Some((range, offset)) => match txt.chars().nth((offset+off) + 1) {
+                Some(id_chr) if id_chr.is_digit(10) => {
+                    let id = id_chr.to_digit(10).unwrap();
+                    Some((RegexRpt::new(id, char_set, range), off + offset + 2))
+                }
+                Some(id_chr) => RegexToken::id_error(format!(
+                    "Found non numeric character after '{{...}}': {}",
+                    id_chr
+                )),
+                _ => RegexToken::id_error("No ID associated to '{{...}}'".to_string()),
+            },
+            None => None,
+        }
+    }
+
+    //gets '{N}'
+    fn extract_range(txt: &str) -> Option<(Range<usize>, usize)> {
         let write_error = |msg: &str| {
             eprintln!("{}", msg);
             None
@@ -75,13 +91,13 @@ impl RegexRpt {
         }
     }
 
-    fn get_range(parts: &Vec<&str>) -> Option<Range<u32>> {
-        let mut range: Vec<u32> = Vec::with_capacity(2);
+    fn get_range(parts: &Vec<&str>) -> Option<Range<usize>> {
+        let mut range: Vec<usize> = Vec::with_capacity(2);
         for part in parts.iter() {
             let trimmed = part.trim();
-            match (trimmed, part.trim().parse::<u32>()) {
+            match (trimmed, part.trim().parse::<usize>()) {
                 (_, Ok(num)) => range.push(num),
-                ("", _) => range.push(u32::MAX),
+                ("", _) => range.push(usize::MAX),
                 _ => {
                     eprintln!("Non numeric characters found within '{{...}}'");
                     return None;
@@ -107,14 +123,10 @@ impl RegexRpt {
     fn to_string(&self) -> String {
         let range = match self.range.end {
             0 => format!("{{{}}}", self.range.start),
-            u32::MAX => format!("{{{},}}", self.range.start),
+            usize::MAX => format!("{{{},}}", self.range.start),
             end => format!("{{{}, {}}}", self.range.start, end),
         };
-        let mut chr = self.chr;
-        if chr == '\0' {
-            chr = '.';
-        }
-        format!("{}{}{}", chr, range, self.id)
+        format!("{}{}{}", RegexToken::set_to_string(&self.char_set), range, self.id)
     }
 }
 

@@ -51,6 +51,28 @@ impl RegexToken {
             _ => None,
         }
     }
+
+    fn id_error(msg: String) -> Option<(Box<RegexToken>, usize)> {
+        eprintln!(
+            "{}\n All symbols must have an associated ID between [0,9]",
+            msg
+        );
+        None
+    }
+
+    fn set_to_string(char_set: &Vec<char>) -> String {
+        match char_set.len() {
+            0 => String::from("."),
+            1 => char_set.get(0).unwrap().to_string(),
+            len => {
+                let mut ret = String::with_capacity(len + 3);
+                ret += "[";
+                char_set.iter().for_each(|chr| ret.push(*chr));
+                ret += "]";
+                ret
+            }
+        }
+    }
 }
 
 pub struct TextExtract {

@@ -3,37 +3,45 @@ use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexPls {
     id: u32,
-    chr: char,
+    char_set: Vec<char>,
     text: String,
 }
 
 impl RegexPls {
+    fn new(id: u32, char_set: Vec<char>) -> Box<RegexToken> {
+        Box::new(RegexPls { id, char_set, text: String::new() })
+    }
+
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
-        let write_error = |msg: String| {
-            eprintln!("{}", msg);
-            None
-        };
         let err_msg = "All symbols must have an associated ID between [0,9]";
+
         match (txt.chars().nth(0), txt.chars().nth(2)) {
             (Some(pls_chr), Some(id_chr)) if id_chr.is_digit(10) => {
-                let mut chr = pls_chr;
-                if chr == '.' {
-                    chr = '\0';
+                let id = id_chr.to_digit(10).unwrap();
+                let mut chr_set = Vec::new();
+                if pls_chr != '.' {
+                    chr_set.push(pls_chr);
                 }
-                Some((
-                    Box::new(RegexPls {
-                        id: id_chr.to_digit(10).unwrap(),
-                        chr,
-                        text: String::new(),
-                    }),
-                    3,
-                ))
+                Some((RegexPls::new(id, chr_set), 3))
             }
-            (Some(_), Some(id_chr)) => write_error(format!(
-                "Found non numeric char after '+': {}\n{}",
-                id_chr, err_msg
-            )),
-            _ => write_error(format!("No ID associated to '+'\n{}", err_msg)),
+            (Some(_), Some(id_chr)) => {
+                RegexToken::id_error(format!("Found non numeric char after '+': {}", id_chr))
+            }
+            _ => RegexToken::id_error("No ID associated to '+'".to_string()),
+        }
+    }
+
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    pub fn from_char_set(txt: &str, char_set: Vec<char>, off: usize) -> Option<(Box<RegexToken>, usize)>  {
+        match (txt.chars().nth(off), txt.chars().nth(off+1)) {
+            (Some('+'), Some(id_chr)) if id_chr.is_digit(10) => {
+                let id = id_chr.to_digit(10).unwrap();
+                Some((RegexPls::new(id, char_set), off+2))
+            },
+            (Some('+'), Some(id_chr)) => {
+                RegexToken::id_error(format!("Found non numeric char after '+': {}", id_chr))
+            }
+            _ => RegexToken::id_error("No ID associated to '+'".to_string()),
         }
     }
 }
@@ -66,11 +74,7 @@ impl RegexToken for RegexPls {
 
 impl Display for RegexPls {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        let mut chr = self.chr;
-        if chr == '\0' {
-            chr = '.'
-        }
-        write!(f, "{}+{}", chr, self.id)
+        write!(f, "{}+{}", RegexToken::set_to_string(&self.char_set), self.id)
     }
 }
 

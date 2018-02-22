@@ -1,4 +1,8 @@
 use super::{RegexToken, TextExtract};
+use regex::ast::RegexAst;
+use regex::pls::RegexPls;
+use regex::qst::RegexQst;
+use regex::rpt::RegexRpt;
 use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexSet {
@@ -9,6 +13,15 @@ pub struct RegexSet {
 }
 
 impl RegexSet {
+    fn new(id: u32, chars: Vec<char>, expr: String) -> Box<RegexToken> {
+        Box::new(RegexSet {
+            id,
+            chars,
+            expr,
+            text: String::new(),
+        })
+    }
+
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
         let mut chars: Vec<char> = Vec::with_capacity(txt.len() - 1);
         let mut it = txt.chars();
@@ -25,23 +38,19 @@ impl RegexSet {
                         let id = id_chr.to_digit(10).unwrap();
                         let expr = RegexSet::extract_expr(&chars);
                         chars.sort();
-                        return Some((
-                            Box::new(RegexSet {
-                                id,
-                                chars,
-                                expr,
-                                text: String::new(),
-                            }),
-                            offset + 1,
-                        ));
+                        return Some((RegexSet::new(id, chars, expr), offset + 1));
                     }
+                    Some('*') => return RegexAst::from_char_set(txt, chars, offset + 1),
+                    Some('+') => return RegexPls::from_char_set(txt, chars, offset + 1),
+                    Some('?') => return RegexQst::from_char_set(txt, chars, offset + 1),
+                    Some('{') => return RegexRpt::from_char_set(txt, chars, offset + 1),
                     Some(id_chr) => {
-                        eprintln!("Non numeric character found after '[...]'");
-                        return None;
+                        return RegexToken::id_error(format!(
+                            "Found non numeric character after '[...]'"
+                        ))
                     }
                     None => {
-                        eprintln!("No ID character found after '[...]'");
-                        return None;
+                        return RegexToken::id_error("No ID associated to '{{...}}'".to_string())
                     }
                 },
                 '\\' if !escaped => {

@@ -1,6 +1,9 @@
 use super::{RegexToken, TextExtract};
-use std::fmt::{Display, Formatter, Result};
 use regex::ast::RegexAst;
+use regex::pls::RegexPls;
+use regex::qst::RegexQst;
+use regex::rpt::RegexRpt;
+use std::fmt::{Display, Formatter, Result};
 
 pub struct RegexDot {
     id: u32,
@@ -9,6 +12,10 @@ pub struct RegexDot {
 
 impl RegexDot {
     pub fn from_str(txt: &str) -> Option<(Box<RegexToken>, usize)> {
+        let write_error = |msg| {
+            eprintln!("{}", msg);
+            None
+        };
         let err_msg = "All symbols must have an associated ID between [0,9]";
         match txt.chars().nth(0) {
             Some(next_chr) if next_chr.is_digit(10) => {
@@ -21,21 +28,15 @@ impl RegexDot {
                     2,
                 ))
             }
-            Some(next_chr) if next_chr == '*' => match RegexAst::from_str(&format!(".{}", txt)) {
-                Some((symbol, _)) => Some((symbol, 2)),
-                None => None,
-            },
-            Some(next_chr) => {
-                eprintln!(
-                    "Found non numeric char after '.': {}\n{}",
-                    next_chr, err_msg
-                );
-                None
-            }
-            None => {
-                eprintln!("No ID associated to '.'\n{}", err_msg);
-                None
-            }
+            Some('*') => RegexAst::from_char_set(&format!(".{}", txt), Vec::new(), 1),
+            Some('+') => RegexPls::from_char_set(&format!(".{}", txt), Vec::new(), 1),
+            Some('?') => RegexQst::from_char_set(&format!(".{}", txt), Vec::new(), 1),
+            Some('{') => RegexRpt::from_char_set(&format!(".{}", txt), Vec::new(), 1),
+            Some(next_chr) => write_error(format!(
+                "Found non numeric char after '.': {}\n{}",
+                next_chr, err_msg
+            )),
+            None => write_error(format!("No ID associated to '.'\n{}", err_msg)),
         }
     }
 }
